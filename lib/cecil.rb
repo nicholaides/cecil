@@ -184,6 +184,7 @@ module Cecil
     end
   end
 
+  require 'json'
   class TypeScript < Code
     def indent_chars = "  "
 
