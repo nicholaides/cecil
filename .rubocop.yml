@@ -1,5 +1,5 @@
 AllCops:
-  TargetRubyVersion: 2.6
+  TargetRubyVersion: 3.2
 
 Style/StringLiterals:
   Enabled: true
@@ -8,6 +8,23 @@ Style/StringLiterals:
 Style/StringLiteralsInInterpolation:
   Enabled: true
   EnforcedStyle: double_quotes
+
+
+# Doesn't work when aliasing `
+Style/Alias:          { Enabled: false }
+
+# Should I obey this?
+Style/ClassVars: { Enabled: false }
+
+Style/FrozenStringLiteralComment: { Enabled: false }
+Lint/AssignmentInCondition:       { Enabled: false }
+Style/NumericPredicate:           { Enabled: false }
+Style/Documentation:              { Enabled: false }
+Metrics/AbcSize:                  { Enabled: false }
+Metrics/ClassLength:              { Enabled: false }
+Metrics/PerceivedComplexity:      { Enabled: false }
+Metrics/CyclomaticComplexity:     { Enabled: false }
+Metrics/MethodLength:             { Enabled: false }
 
 Layout/LineLength:
   Max: 120
