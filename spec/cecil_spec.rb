@@ -119,7 +119,7 @@ RSpec.describe Cecil do
           code do
             `line { $code } [ $another ]`["my code"]
           end
-        end.to raise_error
+        end.to raise_error(/mismatch/i)
       end
 
       it "errors on unmatched placeholders given keyword arguments " do
@@ -127,7 +127,7 @@ RSpec.describe Cecil do
           code do
             `line { $code } [ $another ]`[code: "my code"]
           end
-        end.to raise_error
+        end.to raise_error(/mismatch/i)
       end
 
       it "errors on unmatched placeholder values given positional arguments" do
@@ -135,7 +135,7 @@ RSpec.describe Cecil do
           code do
             `line { $code }`["my code", "more"]
           end
-        end.to raise_error
+        end.to raise_error(/mismatch/i)
       end
 
       it "errors on unmatched placeholder values given keyword arguments " do
@@ -143,7 +143,7 @@ RSpec.describe Cecil do
           code do
             `line { $code }`[code: "my code", more: "some extra"]
           end
-        end.to raise_error
+        end.to raise_error(/mismatch/i)
       end
 
       it "errors on unmatched placeholder values given keyword arguments " do
@@ -151,7 +151,7 @@ RSpec.describe Cecil do
           code do
             `line { $code }`[wrong_name: "my code"]
           end
-        end.to raise_error
+        end.to raise_error(/mismatch/i)
       end
 
       it "errors on unmatched placeholder values given keyword arguments " do
@@ -159,7 +159,7 @@ RSpec.describe Cecil do
           code do
             `line { $code }`[]
           end
-        end.to raise_error
+        end.to raise_error(/mismatch/i)
       end
 
       it "errors on unmatched placeholder values given keyword arguments " do
@@ -167,7 +167,7 @@ RSpec.describe Cecil do
           code do
             `line { $code }`
           end
-        end.to raise_error
+        end.to raise_error(/mismatch/i)
       end
 
       it "can include numbers, letters, and underscores" do
