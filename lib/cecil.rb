@@ -30,7 +30,7 @@ module Cecil
       alias :` :src
     end
 
-    def self.call(out = $stdout, &block)
+    def self.call(out = $DEFAULT_OUTPUT, &block)
       raise "code context already running :(" if @@context
 
       new
@@ -38,7 +38,10 @@ module Cecil
         .stringify
         .lstrip
         .then { out << _1 }
-      out << "\n"
+    end
+
+    def self.generate_string(&block)
+      call("", &block)
     end
 
     def self.with_context(code)
@@ -86,7 +89,7 @@ module Cecil
       srcs.join
     end
 
-    def ending_pairs
+    def block_ending_pairs
       {
         "{" => "}",
         "[" => "]",
@@ -98,13 +101,23 @@ module Cecil
       }
     end
 
+    def placeholder_delimiting_pairs
+      {
+        "{" => "}",
+        "[" => "]",
+        "<" => ">",
+        "(" => ")",
+        "" => ""
+      }
+    end
+
     def close
       stack = []
 
       src = @src.strip
 
       while src.size > 0 # rubocop:disable Style/ZeroLengthPredicate
-        opener, closer = ending_pairs.detect { |l, _r| src.end_with?(l) } || break
+        opener, closer = block_ending_pairs.detect { |l, _r| src.end_with?(l) } || break
         stack.push closer
         src = src[0...-opener.size]
       end
@@ -119,12 +132,44 @@ module Cecil
       end
     end
 
-    def need_format = /\$[[:alnum:]_]+/
+    def placeholder_ident_re = /[[:alnum:]_]+/
+    def placeholder_start = /\$/
+
+    def placeholder_re
+      /
+        #{placeholder_start}
+        #{
+          Regexp.union(
+            placeholder_delimiting_pairs.map do |pstart, pend|
+              /
+                #{Regexp.quote pstart}
+                (?<placeholder>
+                  #{placeholder_ident_re}
+                )
+                #{Regexp.quote pend}
+              /x
+            end
+          )
+        }
+      /x
+    end
+
+    class Placeholder
+      attr_reader :ident, :offset_start, :offset_end
+
+      def initialize(match)
+        @ident = match[:placeholder]
+        @offset_start, @offset_end = match.offset(0)
+      end
+
+      def range = offset_start...offset_end
+    end
 
     def interpolate
       return unless @src
 
-      matches = @src.to_enum(:scan, need_format).map { Regexp.last_match }.group_by { _1[0] }
+      matches = @src.to_enum(:scan, placeholder_re).map { Regexp.last_match }.map { Placeholder.new(_1) }
+      match_idents = matches.map(&:ident).to_set
 
       src = case @subs
             in nil
@@ -136,13 +181,13 @@ module Cecil
 
               @src
             in [], opts
-              raise "Mismatch?" if matches.size != opts.size
+              raise "Mismatch?" if match_idents != opts.keys.map(&:to_s).to_set
 
               replace(@src, matches, opts)
             in args, {}
-              raise "Mismatch?" if matches.size != args.size
+              raise "Mismatch?" if match_idents.size != args.size
 
-              replace(@src, matches, matches.keys.zip(args).to_h)
+              replace(@src, matches, match_idents.zip(args).to_h)
             else raise "Expects args or opts but not both: #{@subs.inspect}"
             end
 
@@ -171,28 +216,28 @@ module Cecil
       lines.join
     end
 
-    def replace(src, _matches, mapping)
-      mapping.reduce(src) do |str, (key, value)|
-        before =
-          case key
-          in Symbol then "$#{key}"
-          in String then key
-          end
+    def replace(src, placeholders, placeholder_inputs)
+      values = placeholder_inputs.transform_keys(&:to_s)
 
-        str.gsub(before, value.to_s)
+      src.dup.tap do |new_src|
+        placeholders.reverse.each do |placeholder|
+          value = values.fetch(placeholder.ident)
+
+          new_src[placeholder.range] = value.to_s
+        end
       end
     end
   end
 
-  require 'json'
+  require "json"
   class TypeScript < Code
     def indent_chars = "  "
 
     module Helpers
-      def t(items)= Array(items).join(" | ")
-      def l(items)= Array(items).join(", ")
-      def s(item)= item.to_s.to_json[1...-1]
-      def j(item)= item.to_json
+      def t(items) = Array(items).join(" | ")
+      def l(items) = Array(items).join(", ")
+      def s(item) = item.to_s.to_json[1...-1]
+      def j(item) = item.to_json
     end
 
     class << self

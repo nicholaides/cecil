@@ -9,8 +9,12 @@ GEM
     ast (2.4.2)
     base64 (0.1.1)
     diff-lcs (1.5.0)
+    ffi (1.16.3)
     json (2.6.3)
     language_server-protocol (3.17.0.3)
+    listen (3.8.0)
+      rb-fsevent (~> 0.10, >= 0.10.3)
+      rb-inotify (~> 0.9, >= 0.9.10)
     parallel (1.23.0)
     parser (3.2.2.3)
       ast (~> 2.4.1)
@@ -18,7 +22,14 @@ GEM
     racc (1.7.1)
     rainbow (3.1.1)
     rake (13.0.6)
+    rb-fsevent (0.11.2)
+    rb-inotify (0.10.1)
+      ffi (~> 1.0)
     regexp_parser (2.8.1)
+    retest (1.11.0)
+      listen (~> 3.2)
+      string-similarity (~> 2.1)
+      tty-option (~> 0.1)
     rexml (3.2.6)
     rspec (3.12.0)
       rspec-core (~> 3.12.0)
@@ -48,6 +59,8 @@ GEM
     rubocop-ast (1.29.0)
       parser (>= 3.2.1.0)
     ruby-progressbar (1.13.0)
+    string-similarity (2.1.0)
+    tty-option (0.3.0)
     unicode-display_width (2.4.2)
 
 PLATFORMS
@@ -56,6 +69,7 @@ PLATFORMS
 DEPENDENCIES
   cecil!
   rake (~> 13.0)
+  retest (~> 1.11)
   rspec (~> 3.0)
   rubocop (~> 1.21)
 
