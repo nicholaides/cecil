@@ -9,7 +9,6 @@ Style/StringLiteralsInInterpolation:
   Enabled: true
   EnforcedStyle: double_quotes
 
-
 # Doesn't work when aliasing `
 Style/Alias:          { Enabled: false }
 
@@ -27,6 +26,8 @@ Metrics/PerceivedComplexity:      { Enabled: false }
 Metrics/CyclomaticComplexity:     { Enabled: false }
 Metrics/MethodLength:             { Enabled: false }
 
+AllCops:
+  NewCops: enable
 
 Layout/LineLength:
   Max: 120

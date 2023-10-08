@@ -30,18 +30,18 @@ module Cecil
       alias :` :src
     end
 
-    def self.call(out = $DEFAULT_OUTPUT, &block)
+    def self.call(out = $DEFAULT_OUTPUT, &)
       raise "code context already running :(" if @@context
 
       new
-        .tap { _1.with { instance_eval(&block) } }
+        .tap { _1.with { instance_eval(&) } }
         .stringify
         .lstrip
         .then { out << _1 }
     end
 
-    def self.generate_string(&block)
-      call("", &block)
+    def self.generate_string(&)
+      call("", &)
     end
 
     def self.with_context(code)
@@ -72,11 +72,9 @@ module Cecil
     alias call with
     alias [] with
 
-    def with_context(&block)
-      self.class.with_context(self, &block)
-    end
+    def with_context(&) = self.class.with_context(self, &)
 
-    def add_child(child)= @children << child
+    def add_child(child) = @children << child
 
     def stringify
       srcs = [interpolate]
@@ -169,19 +167,15 @@ module Cecil
       return unless @src
 
       matches = @src.to_enum(:scan, placeholder_re).map { Regexp.last_match }.map { Placeholder.new(_1) }
-      match_idents = matches.map(&:ident).to_set
+      match_idents = matches.to_set(&:ident)
 
       src = case @subs
-            in nil
-              raise "Mismatch?" if matches.any?
-
-              @src
-            in [], {}
+            in nil | [[], {}]
               raise "Mismatch?" if matches.any?
 
               @src
             in [], opts
-              raise "Mismatch?" if match_idents != opts.keys.map(&:to_s).to_set
+              raise "Mismatch?" if match_idents != opts.keys.to_set(&:to_s)
 
               replace(@src, matches, opts)
             in args, {}
