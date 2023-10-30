@@ -20,42 +20,41 @@ module Cecil
       @parent.add_child self
     end
 
-    def self.src(src)
-      raise "No code context running yet" unless @@context
-
-      @@context.class.new(src)
-    end
-
     class << self
-      alias :` :src
-    end
+      def src(src)
+        raise "No code context running yet" unless @@context
 
-    def self.call(out = $DEFAULT_OUTPUT, &)
-      raise "code context already running :(" if @@context
-
-      new
-        .tap { _1.with { instance_eval(&) } }
-        .stringify
-        .lstrip
-        .then { out << _1 }
-    end
-
-    def self.generate_string(&)
-      call("", &)
-    end
-
-    def self.with_context(code)
-      maintain_context do
-        @@context = code
-        yield
+        @@context.class.new(src)
       end
-    end
+      alias :` :src
 
-    def self.maintain_context
-      previous_context = @@context
-      yield
-    ensure
-      @@context = previous_context
+      def call(out = $DEFAULT_OUTPUT, &)
+        raise "code context already running :(" if @@context
+
+        new
+          .tap { _1.with { instance_eval(&) } }
+          .stringify
+          .lstrip
+          .then { out << _1 }
+      end
+
+      def generate_string(&)
+        call("", &)
+      end
+
+      def with_context(code)
+        maintain_context do
+          @@context = code
+          yield
+        end
+      end
+
+      def maintain_context
+        previous_context = @@context
+        yield
+      ensure
+        @@context = previous_context
+      end
     end
 
     def with(*args, **options, &block)
