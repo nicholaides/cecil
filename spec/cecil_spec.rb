@@ -265,6 +265,22 @@ RSpec.describe Cecil do
         end.to raise_error(/mismatch/i)
       end
 
+      it "errors immediately when called if arguments are incorrect" do
+        found_error = nil
+
+        begin
+          code do
+            `line { $code }`[]
+          rescue StandardError => e
+            found_error = e
+          end
+        rescue StandardError
+          nil
+        end
+
+        expect(found_error.message).to match(/mismatch/i)
+      end
+
       it "can include numbers, letters, and underscores" do
         expect_code do
           `my $c_odE2 code`["special"]

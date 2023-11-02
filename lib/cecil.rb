@@ -12,6 +12,12 @@ module Cecil
       @parent = parent
       @depth = -1
 
+      @placeholders = Array(
+        src && src.to_enum(:scan, placeholder_re)
+           .map { Regexp.last_match }
+           .map { Cecil::Code::Placeholder.new(_1) }
+      )
+
       return unless @parent
 
       @depth = @parent.depth + 1
@@ -53,6 +59,12 @@ module Cecil
       raise "Expects args or opts but not both" if args.any? && options.any?
 
       @subs = [args, options]
+
+      if @placeholders.any?
+        @src = Cecil.interpolate(@src, @placeholders, args, options)
+        @replaced = true
+      end
+
       @children = []
 
       self.class.with_context(self, &block) if block
@@ -66,7 +78,9 @@ module Cecil
     def add_child(child) = @children << child
 
     def stringify
-      srcs = [interpolate]
+      raise "Mismatch?" if @placeholders.any? && !@replaced
+
+      srcs = [reformat]
 
       if is_parent?
         srcs += @children.map(&:stringify)
@@ -152,29 +166,10 @@ module Cecil
       def range = offset_start...offset_end
     end
 
-    def interpolate
+    def reformat
       return unless @src
 
-      matches = @src.to_enum(:scan, placeholder_re).map { Regexp.last_match }.map { Placeholder.new(_1) }
-      match_idents = matches.to_set(&:ident)
-
-      src = case @subs
-            in nil | [[], {}]
-              raise "Mismatch?" if matches.any?
-
-              @src
-            in [], opts
-              raise "Mismatch?" if match_idents != opts.keys.to_set(&:to_s)
-
-              replace(@src, matches, opts)
-            in args, {}
-              raise "Mismatch?" if match_idents.size != args.size
-
-              replace(@src, matches, match_idents.zip(args).to_h)
-            else raise "Expects args or opts but not both: #{@subs.inspect}"
-            end
-
-      src = reindent(src, @depth)
+      src = reindent(@src, @depth)
 
       src += "\n" unless src.end_with?("\n")
       src
@@ -198,18 +193,6 @@ module Cecil
       lines = lines.map { _1.sub(/^[ \t]{0,#{min_indent}}/, indent_chars * depth) }
       lines.join
     end
-
-    def replace(src, placeholders, placeholder_inputs)
-      values = placeholder_inputs.transform_keys(&:to_s)
-
-      src.dup.tap do |new_src|
-        placeholders.reverse.each do |placeholder|
-          value = values.fetch(placeholder.ident)
-
-          new_src[placeholder.range] = value.to_s
-        end
-      end
-    end
   end
 
   require "json"
@@ -225,6 +208,42 @@ module Cecil
 
     class << self
       include Helpers
+    end
+  end
+
+  def self.interpolate(template, placeholders, args, options)
+    return unless template
+
+    match_idents = placeholders.to_set(&:ident)
+
+    subs = [args, options]
+
+    case subs
+    in [], {}
+      raise "Mismatch?" if placeholders.any?
+
+      template
+    in [], opts
+      raise "Mismatch?" if match_idents != opts.keys.to_set(&:to_s)
+
+      replace(template, placeholders, opts)
+    in args, {}
+      raise "Mismatch?" if match_idents.size != args.size
+
+      replace(template, placeholders, match_idents.zip(args).to_h)
+    else raise "Expects args or opts but not both: #{subs.inspect}"
+    end
+  end
+
+  def self.replace(src, placeholders, placeholder_inputs)
+    values = placeholder_inputs.transform_keys(&:to_s)
+
+    src.dup.tap do |new_src|
+      placeholders.reverse.each do |placeholder|
+        value = values.fetch(placeholder.ident)
+
+        new_src[placeholder.range] = value.to_s
+      end
     end
   end
 end
