@@ -43,6 +43,101 @@ RSpec.describe Cecil do
     end
   end
 
+  describe "nesting generation calls" do
+    it "can generate in sequence" do
+      inner = Cecil::Code.generate_string do
+        `inner {`[] do
+          `content`
+        end
+      end
+
+      expect(inner).to eq <<~CODE
+        inner {
+            content
+        }
+      CODE
+
+      outer = Cecil::Code.generate_string do
+        `start outer`
+
+        `end outer`
+      end
+
+      expect(outer).to eq <<~CODE
+        start outer
+        end outer
+      CODE
+    end
+
+    it "can generate while another is generating" do
+      inner = nil
+      outer = Cecil::Code.generate_string do
+        `start outer`
+        inner = Cecil::Code.generate_string do
+          `inner {`[] do
+            `content`
+          end
+        end
+        `end outer`
+      end
+
+      expect(inner).to eq <<~CODE
+        inner {
+            content
+        }
+      CODE
+
+      expect(outer).to eq <<~CODE
+        start outer
+        end outer
+      CODE
+    end
+  end
+
+  it "can generate and include the contents of another" do
+    expect(
+      Cecil::Code.generate_string do
+        `start outer`
+        src(
+          Cecil::Code.generate_string do
+            `inner {`[] do
+              `content`
+            end
+          end
+        )
+        `end outer`
+      end
+    ).to eq <<~CODE
+      start outer
+      inner {
+          content
+      }
+      end outer
+    CODE
+  end
+
+  it "indents correctly when nesting generation" do
+    expect(
+      Cecil::Code.generate_string do
+        `outer (`[] do
+          src(
+            Cecil::Code.generate_string do
+              `inner {`[] do
+                `content`
+              end
+            end
+          )
+        end
+      end
+    ).to eq <<~CODE
+      outer (
+          inner {
+              content
+          }
+      )
+    CODE
+  end
+
   def blank?(str) = str =~ /^\s*$/
 
   describe "outputting code" do
@@ -223,6 +318,23 @@ RSpec.describe Cecil do
 
     describe "blocks" do
       describe "ending pairs"
+      describe "indentation" do
+        it "indents blocks" do
+          expect(Cecil::Code.generate_string do
+            `start outer`
+            `inner {`[] do
+              `content`
+            end
+            `end outer`
+          end).to eq <<~CODE
+            start outer
+            inner {
+                content
+            }
+            end outer
+          CODE
+        end
+      end
     end
     describe "reindenting multiline strings"
     describe "adding trailing newlines to multiline strings"

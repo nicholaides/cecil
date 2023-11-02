@@ -3,18 +3,19 @@ require_relative "cecil/version"
 module Cecil
   class Code
     @@context = nil
+    @@contexts = []
 
     attr_accessor :depth
 
     def is_parent? = !!@children # rubocop:disable Naming/PredicateName
     def root? = !@src
 
-    def initialize(src = nil)
+    def initialize(src: nil, parent: nil)
       @src = src
-
+      @parent = parent
       @depth = -1
 
-      return unless @parent = @@context
+      return unless @parent
 
       @depth = @parent.depth + 1
       @parent.add_child self
@@ -24,13 +25,11 @@ module Cecil
       def src(src)
         raise "No code context running yet" unless @@context
 
-        @@context.class.new(src)
+        @@context.class.new(src:, parent: @@context)
       end
       alias :` :src
 
       def call(out = $DEFAULT_OUTPUT, &)
-        raise "code context already running :(" if @@context
-
         new
           .tap { _1.with { instance_eval(&) } }
           .stringify
@@ -43,17 +42,11 @@ module Cecil
       end
 
       def with_context(code)
-        maintain_context do
-          @@context = code
-          yield
-        end
-      end
-
-      def maintain_context
-        previous_context = @@context
+        @@contexts.push @@context
+        @@context = code
         yield
       ensure
-        @@context = previous_context
+        @@context = @@contexts.pop
       end
     end
 
@@ -63,15 +56,13 @@ module Cecil
       @subs = [args, options]
       @children = []
 
-      with_context(&block) if block
+      self.class.with_context(self, &block) if block
 
       self
     end
 
     alias call with
     alias [] with
-
-    def with_context(&) = self.class.with_context(self, &)
 
     def add_child(child) = @children << child
 
