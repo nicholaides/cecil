@@ -5,18 +5,12 @@ module Cecil
     def initialize(parent:, &block)
       @block = block
       @parent = parent
-
-      @child = @parent.class.new(src: nil, parent: self)
-      @parent.add_child self
+      @child = parent.class.new(src: nil, parent: self)
     end
 
     def depth = @parent.depth
 
-    def add_child(...) = nil
-
-    def evaluate!
-      @child.with(&@block)
-    end
+    def evaluate! = @child.with(&@block)
   end
 
   class Code
@@ -39,7 +33,6 @@ module Cecil
       return unless @parent
 
       @depth = @parent.depth + 1
-      @parent.add_child self
     end
 
     def evaluate!
@@ -61,11 +54,13 @@ module Cecil
       def src(src, &deferred)
         raise "No code context running yet" unless current_context
 
-        if deferred
-          DeferredCode.new(parent: current_context, &deferred)
-        else
-          current_context.class.new(src:, parent: current_context)
-        end
+        child = if deferred
+                  DeferredCode.new(parent: current_context, &deferred)
+                else
+                  current_context.class.new(src:, parent: current_context)
+                end
+        current_context.add_child child
+        child
       end
       alias :` :src
 
