@@ -1,44 +1,96 @@
 require_relative "cecil/version"
 
 module Cecil
-  class DeferredCode
+  module ChildNode
+    def parent = @parent
+
+    def parent=(parent)
+      @parent = parent
+    end
+
+    def root = parent.root
+    def depth = parent.depth + 1
+  end
+
+  module ParentNode
+    def children = @children ||= []
+    def add_child(child) = children << child
+
+    def evaluate!
+      children.map!(&:evaluate!)
+      self
+    end
+
+    def stringify = children.map(&:stringify).join
+  end
+
+  class Deferred
+    include ChildNode
+
     def initialize(parent:, &block)
       @block = block
       @parent = parent
-      @child = parent.class.new(src: nil, parent: self)
+      @child = CodeContainer.new(parent: self)
     end
-
-    def depth = @parent.depth
 
     def evaluate! = @child.with(&@block)
   end
 
-  class Code
-    attr_accessor :depth
+  class Root
+    include ParentNode
 
-    def is_parent? = !!@children # rubocop:disable Naming/PredicateName
-    def root? = !@src
+    def root = self
+    def depth = -1
 
-    def initialize(src: nil, parent: nil)
-      @src = src
-      @parent = parent
-      @depth = -1
-
-      @placeholders = Array(
-        src && src.to_enum(:scan, placeholder_re)
-           .map { Regexp.last_match }
-           .map { Cecil::Code::Placeholder.new(_1) }
-      )
-
-      return unless @parent
-
-      @depth = @parent.depth + 1
+    def initialize(klass)
+      @klass = klass
     end
 
-    def evaluate!
-      @children&.map!(&:evaluate!)
+    def with(&)
+      @klass.with_context(self, &)
       self
     end
+
+    def with_context(context, &)
+      @klass.with_context(context, &)
+    end
+
+    def build_child(src:, parent: self) = @klass.new(src:, parent:)
+  end
+
+  class CodeContainer
+    include ChildNode
+    include ParentNode
+
+    def initialize(parent:)
+      @parent = parent
+    end
+
+    def with(&)
+      root.with_context(self, &)
+      self
+    end
+
+    def build_child(src:) = root.build_child(src:, parent: self)
+  end
+
+  class Code
+    include ChildNode
+    include ParentNode
+
+    def root = @parent.root
+
+    def initialize(src:, parent:)
+      @src = src
+      @parent = parent
+
+      @placeholders = src
+                      .to_enum(:scan, placeholder_re)
+                      .map { Regexp.last_match }
+                      .map { Cecil::Code::Placeholder.new(_1) }
+    end
+
+    def build_child(src:) = root.build_child(src:, parent: self)
 
     class << self
       def current_context = @@contexts.last
@@ -55,9 +107,9 @@ module Cecil
         raise "No code context running yet" unless current_context
 
         child = if deferred
-                  DeferredCode.new(parent: current_context, &deferred)
+                  Deferred.new(parent: current_context, &deferred)
                 else
-                  current_context.class.new(src:, parent: current_context)
+                  current_context.build_child(src:)
                 end
         current_context.add_child child
         child
@@ -69,17 +121,15 @@ module Cecil
       end
 
       def call(out = $DEFAULT_OUTPUT, &)
-        new
-          .tap { _1.with { instance_eval(&) } }
-          .evaluate!
-          .stringify
-          .lstrip
-          .then { out << _1 }
+        Root.new(self)
+            .tap { _1.with { instance_eval(&) } }
+            .evaluate!
+            .stringify
+            .lstrip
+            .then { out << _1 }
       end
 
-      def generate_string(&)
-        call("", &)
-      end
+      def generate_string(&) = call("", &)
     end
 
     def with(*args, **options, &block)
@@ -92,8 +142,6 @@ module Cecil
         @replaced = true
       end
 
-      @children = []
-
       self.class.with_context(self, &block) if block
 
       self
@@ -102,16 +150,14 @@ module Cecil
     alias call with
     alias [] with
 
-    def add_child(child) = @children << child
-
     def stringify
       raise "Mismatch?" if @placeholders.any? && !@replaced
 
       srcs = [reformat]
 
-      if is_parent?
-        srcs += @children.map(&:stringify)
-        srcs << close unless root?
+      if children.any?
+        srcs += children.map(&:stringify)
+        srcs << close
       end
 
       srcs.join
@@ -150,7 +196,7 @@ module Cecil
         src = src[0...-opener.size]
       end
 
-      reindent "#{stack.join.strip}\n", @depth
+      reindent "#{stack.join.strip}\n", depth
     end
 
     def <<(item)
@@ -194,9 +240,7 @@ module Cecil
     end
 
     def reformat
-      return unless @src
-
-      src = reindent(@src, @depth)
+      src = reindent(@src, depth)
 
       src += "\n" unless src.end_with?("\n")
       src
