@@ -355,5 +355,25 @@ RSpec.describe Cecil do
     describe "reindenting multiline strings"
     describe "adding trailing newlines to multiline strings"
     describe "using heredocs"
+
+    describe "gatherers" do
+      it "gathers items for depositing below" do
+        expect_code do
+          items = []
+          defer do
+            `export { $items }`[items.join(", ")]
+          end
+          %w[A B C].each do |klass|
+            items << klass
+            `class $Class`[klass]
+          end
+        end.to eq <<~CODE
+          export { A, B, C }
+          class A
+          class B
+          class C
+        CODE
+      end
+    end
   end
 end

@@ -1,6 +1,24 @@
 require_relative "cecil/version"
 
 module Cecil
+  class DeferredCode
+    def initialize(parent:, &block)
+      @block = block
+      @parent = parent
+
+      @child = @parent.class.new(src: nil, parent: self)
+      @parent.add_child self
+    end
+
+    def depth = @parent.depth
+
+    def add_child(...) = nil
+
+    def evaluate!
+      @child.with(&@block)
+    end
+  end
+
   class Code
     attr_accessor :depth
 
@@ -24,20 +42,41 @@ module Cecil
       @parent.add_child self
     end
 
+    def evaluate!
+      @children&.map!(&:evaluate!)
+      self
+    end
+
     class << self
       def current_context = @@contexts.last
       @@contexts = []
 
-      def src(src)
+      def with_context(code)
+        @@contexts.push code
+        yield
+      ensure
+        @@contexts.pop
+      end
+
+      def src(src, &deferred)
         raise "No code context running yet" unless current_context
 
-        current_context.class.new(src:, parent: current_context)
+        if deferred
+          DeferredCode.new(parent: current_context, &deferred)
+        else
+          current_context.class.new(src:, parent: current_context)
+        end
       end
       alias :` :src
+
+      def defer(&)
+        src(nil, &)
+      end
 
       def call(out = $DEFAULT_OUTPUT, &)
         new
           .tap { _1.with { instance_eval(&) } }
+          .evaluate!
           .stringify
           .lstrip
           .then { out << _1 }
@@ -45,13 +84,6 @@ module Cecil
 
       def generate_string(&)
         call("", &)
-      end
-
-      def with_context(code)
-        @@contexts.push code
-        yield
-      ensure
-        @@contexts.pop
       end
     end
 
