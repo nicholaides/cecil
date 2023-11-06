@@ -333,16 +333,39 @@ RSpec.describe Cecil do
     end
 
     describe "blocks" do
-      describe "ending pairs"
+      describe "ending pairs" do
+        it "closes opened brackets" do
+          expect_code do
+            `outer {`[] do
+              `inner`
+            end
+          end.to eq <<~CODE
+            outer {
+                inner
+            }
+          CODE
+        end
+
+        it "closes opened brackets even with no children" do
+          expect_code do
+            `outer {`[] do
+              # noop
+            end
+          end.to eq <<~CODE
+            outer {
+            }
+          CODE
+        end
+      end
       describe "indentation" do
         it "indents blocks" do
-          expect(Cecil::Code.generate_string do
+          expect_code do
             `start outer`
             `inner {`[] do
               `content`
             end
             `end outer`
-          end).to eq <<~CODE
+          end.to eq <<~CODE
             start outer
             inner {
                 content

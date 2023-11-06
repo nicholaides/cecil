@@ -13,11 +13,13 @@ module Cecil
   end
 
   module ParentNode
-    def children = @children ||= []
-    def add_child(child) = children << child
+    attr_reader :children
+
+    def init_children = @children = []
+    def add_child(child) = @children << child
 
     def evaluate!
-      children.map!(&:evaluate!)
+      children&.map!(&:evaluate!)
       self
     end
 
@@ -44,6 +46,7 @@ module Cecil
 
     def initialize(klass)
       @klass = klass
+      init_children
     end
 
     def with(&)
@@ -64,6 +67,7 @@ module Cecil
 
     def initialize(parent:)
       @parent = parent
+      init_children
     end
 
     def with(&)
@@ -135,7 +139,7 @@ module Cecil
     def with(*args, **options, &block)
       raise "Expects args or opts but not both" if args.any? && options.any?
 
-      @subs = [args, options]
+      init_children
 
       if @placeholders.any?
         @src = Cecil.interpolate(@src, @placeholders, args, options)
@@ -155,7 +159,7 @@ module Cecil
 
       srcs = [reformat]
 
-      if children.any?
+      if children
         srcs += children.map(&:stringify)
         srcs << close
       end
