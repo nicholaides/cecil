@@ -356,8 +356,8 @@ RSpec.describe Cecil do
     describe "adding trailing newlines to multiline strings"
     describe "using heredocs"
 
-    describe "gatherers" do
-      it "gathers items for depositing below" do
+    describe "deferred code blocks" do
+      it "defers code blocks for evaluation" do
         expect_code do
           items = []
           defer do
