@@ -43,8 +43,6 @@ module Cecil
   class Root
     include ParentNode
 
-    attr_reader :content_for
-
     def initialize(klass)
       @klass = klass
       init_children
@@ -66,12 +64,14 @@ module Cecil
 
     def build_child(src:, parent: self) = @klass.new(src:, parent:)
 
+    def content_for?(key) = @content_for.key?(key)
+
     def content_for__add(key, child_container)
-      content_for[key] << child_container
+      @content_for[key] << child_container
     end
 
     def content_for__place(key, new_parent)
-      content_for.fetch(key).each { _1.place_content new_parent }
+      @content_for.fetch(key).each { _1.place_content new_parent }
     end
   end
 
@@ -153,10 +153,15 @@ module Cecil
       def content_for(key, &content_block)
         if content_block
           current_root.content_for__add key, ContentForContainer.new(parent: current_context).with(&content_block)
+        elsif content_for?(key)
+          content_for!(key)
         else
-          current_root.content_for__place key, current_context
+          current_context.add_child Deferred.new(parent: current_context) { content_for!(key) }
         end
       end
+
+      def content_for?(key) = current_root.content_for?(key)
+      def content_for!(key) = current_root.content_for__place key, current_context
 
       def call(out = $DEFAULT_OUTPUT, &)
         Root.new(self)

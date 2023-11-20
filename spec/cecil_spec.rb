@@ -496,9 +496,7 @@ RSpec.describe Cecil do
       it "outputs above and indents content to level of location in document" do
         expect_code do
           `exporting {`[] do
-            defer do
-              content_for :exports
-            end
+            content_for :exports
           end
 
           %w[A B C].each do |klass|
