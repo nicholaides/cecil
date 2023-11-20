@@ -36,18 +36,24 @@ module Cecil
     end
 
     def evaluate! = @child.with(&@block)
+
+    def depth = parent.depth
   end
 
   class Root
     include ParentNode
 
-    def root = self
-    def depth = -1
+    attr_reader :content_for
 
     def initialize(klass)
       @klass = klass
       init_children
+
+      @content_for = Hash.new { |hash, key| hash[key] = [] }
     end
+
+    def root = self
+    def depth = -1
 
     def with(&)
       @klass.with_context(self, &)
@@ -59,6 +65,14 @@ module Cecil
     end
 
     def build_child(src:, parent: self) = @klass.new(src:, parent:)
+
+    def content_for__add(key, child_container)
+      content_for[key] << child_container
+    end
+
+    def content_for__place(key, new_parent)
+      content_for.fetch(key).each { _1.place_content new_parent }
+    end
   end
 
   class CodeContainer
@@ -76,6 +90,19 @@ module Cecil
     end
 
     def build_child(src:) = root.build_child(src:, parent: self)
+
+    def depth = parent.depth
+  end
+
+  class ContentForContainer < CodeContainer
+    attr_accessor :location_parent
+
+    def place_content(new_parent)
+      self.location_parent = new_parent
+      new_parent.add_child self
+    end
+
+    def depth = location_parent.depth
   end
 
   class Code
@@ -97,8 +124,9 @@ module Cecil
     def build_child(src:) = root.build_child(src:, parent: self)
 
     class << self
-      def current_context = @@contexts.last
       @@contexts = []
+      def current_context = @@contexts.last || raise("No code context running yet")
+      def current_root = current_context.root
 
       def with_context(code)
         @@contexts.push code
@@ -108,8 +136,6 @@ module Cecil
       end
 
       def src(src, &deferred)
-        raise "No code context running yet" unless current_context
-
         child = if deferred
                   Deferred.new(parent: current_context, &deferred)
                 else
@@ -122,6 +148,14 @@ module Cecil
 
       def defer(&)
         src(nil, &)
+      end
+
+      def content_for(key, &content_block)
+        if content_block
+          current_root.content_for__add key, ContentForContainer.new(parent: current_context).with(&content_block)
+        else
+          current_root.content_for__place key, current_context
+        end
       end
 
       def call(out = $DEFAULT_OUTPUT, &)

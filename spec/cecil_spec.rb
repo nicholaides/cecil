@@ -397,6 +397,128 @@ RSpec.describe Cecil do
           class C
         CODE
       end
+
+      it "defers code blocks for evaluation and keep proper indentation level" do
+        expect_code do
+          items = []
+          `export {`[] do
+            defer do
+              `$items`[items.join(", ")]
+            end
+          end
+
+          %w[A B C].each do |klass|
+            items << klass
+            `class $Class`[klass]
+          end
+        end.to eq <<~CODE
+          export {
+              A, B, C
+          }
+          class A
+          class B
+          class C
+        CODE
+      end
+    end
+
+    describe ".content_for" do
+      it "outputs later when called" do
+        expect_code do
+          %w[A B C].each do |klass|
+            `class $Class {}`[klass]
+
+            content_for :exports do
+              `export $Class`[klass]
+            end
+          end
+          content_for :exports
+        end.to eq <<~CODE
+          class A {}
+          class B {}
+          class C {}
+          export A
+          export B
+          export C
+        CODE
+      end
+
+      it "indents content to level of location in document" do
+        expect_code do
+          %w[A B C].each do |klass|
+            `class $Class {}`[klass]
+
+            content_for :exports do
+              `-> $Class`[klass]
+            end
+          end
+
+          `exporting {`[] do
+            content_for :exports
+          end
+        end.to eq <<~CODE
+          class A {}
+          class B {}
+          class C {}
+          exporting {
+              -> A
+              -> B
+              -> C
+          }
+        CODE
+      end
+
+      it "outputs above" do
+        expect_code do
+          `code`
+          defer do
+            content_for :exports
+          end
+
+          %w[A B C].each do |klass|
+            `class $Class {}`[klass]
+
+            content_for :exports do
+              `export $Class`[klass]
+            end
+          end
+        end.to eq <<~CODE
+          code
+          export A
+          export B
+          export C
+          class A {}
+          class B {}
+          class C {}
+        CODE
+      end
+
+      it "outputs above and indents content to level of location in document" do
+        expect_code do
+          `exporting {`[] do
+            defer do
+              content_for :exports
+            end
+          end
+
+          %w[A B C].each do |klass|
+            `class $Class {}`[klass]
+
+            content_for :exports do
+              `-> $Class`[klass]
+            end
+          end
+        end.to eq <<~CODE
+          exporting {
+              -> A
+              -> B
+              -> C
+          }
+          class A {}
+          class B {}
+          class C {}
+        CODE
+      end
     end
   end
 end
