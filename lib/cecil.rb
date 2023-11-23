@@ -2,11 +2,7 @@ require_relative "cecil/version"
 
 module Cecil
   module ChildNode
-    def parent = @parent
-
-    def parent=(parent)
-      @parent = parent
-    end
+    attr_accessor :parent
 
     def root = parent.root
     def depth = parent.depth + 1
@@ -28,14 +24,19 @@ module Cecil
 
   class Deferred
     include ChildNode
+    include ParentNode
 
     def initialize(parent:, &block)
+      init_children
+      self.parent = parent
       @block = block
-      @parent = parent
-      @child = CodeContainer.new(parent: self)
+      add_child CodeContainer.new(parent: self)
     end
 
-    def evaluate! = @child.with(&@block)
+    def evaluate!
+      children => [child]
+      child.with(&@block)
+    end
 
     def depth = parent.depth
   end
