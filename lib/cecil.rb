@@ -1,18 +1,17 @@
 require_relative "cecil/version"
 
 module Cecil
-  module ChildNode
-    attr_accessor :parent
+  class Node
+    attr_accessor :parent, :children
+
+    def initialize
+      self.children = []
+    end
 
     def root = parent.root
     def depth = parent.depth + 1
-  end
 
-  module ParentNode
-    attr_reader :children
-
-    def init_children = @children = []
-    def add_child(child) = @children << child
+    def add_child(child) = children << child
 
     def evaluate!
       children&.map!(&:evaluate!)
@@ -22,12 +21,9 @@ module Cecil
     def stringify = children.map(&:stringify).join
   end
 
-  class Deferred
-    include ChildNode
-    include ParentNode
-
+  class Deferred < Node
     def initialize(parent:, &block)
-      init_children
+      super()
       self.parent = parent
       @block = block
       add_child CodeContainer.new(parent: self)
@@ -41,13 +37,11 @@ module Cecil
     def depth = parent.depth
   end
 
-  class Root
-    include ParentNode
-
+  class Root < Node
     def initialize(klass)
-      @klass = klass
-      init_children
+      super()
 
+      @klass = klass
       @content_for = Hash.new { |hash, key| hash[key] = [] }
     end
 
@@ -59,30 +53,23 @@ module Cecil
       self
     end
 
-    def with_node(node, &)
-      @klass.with_node(node, &)
-    end
+    def with_node(node, &) = @klass.with_node(node, &)
 
     def build_child(src:, parent: self) = @klass.new(src:, parent:)
 
     def content_for?(key) = @content_for.key?(key)
 
-    def content_for__add(key, child_container)
-      @content_for[key] << child_container
-    end
+    def content_for__add(key, child_container) = @content_for[key] << child_container
 
     def content_for__place(key, new_parent)
       @content_for.fetch(key).each { _1.place_content new_parent }
     end
   end
 
-  class CodeContainer
-    include ChildNode
-    include ParentNode
-
+  class CodeContainer < Node
     def initialize(parent:)
-      @parent = parent
-      init_children
+      super()
+      self.parent = parent
     end
 
     def with(&)
@@ -106,15 +93,15 @@ module Cecil
     def depth = location_parent.depth
   end
 
-  class Code
-    include ChildNode
-    include ParentNode
-
+  class Code < Node
     def root = @parent.root
 
     def initialize(src:, parent:)
+      super()
+      self.parent = parent
+      self.children = nil
+
       @src = src
-      @parent = parent
 
       @placeholders = src
                       .to_enum(:scan, placeholder_re)
@@ -179,7 +166,7 @@ module Cecil
     def with(*args, **options, &block)
       raise "Expects args or opts but not both" if args.any? && options.any?
 
-      init_children
+      self.children = []
 
       if @placeholders.any?
         @src = Cecil.interpolate(@src, @placeholders, args, options)
