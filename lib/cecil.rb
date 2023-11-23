@@ -54,12 +54,12 @@ module Cecil
     def depth = -1
 
     def with(&)
-      @klass.with_context(self, &)
+      @klass.with_node(self, &)
       self
     end
 
-    def with_context(context, &)
-      @klass.with_context(context, &)
+    def with_node(node, &)
+      @klass.with_node(node, &)
     end
 
     def build_child(src:, parent: self) = @klass.new(src:, parent:)
@@ -85,7 +85,7 @@ module Cecil
     end
 
     def with(&)
-      root.with_context(self, &)
+      root.with_node(self, &)
       self
     end
 
@@ -124,24 +124,24 @@ module Cecil
     def build_child(src:) = root.build_child(src:, parent: self)
 
     class << self
-      @@contexts = []
-      def current_context = @@contexts.last || raise("No code context running yet")
-      def current_root = current_context.root
+      @@nodes = []
+      def current_node = @@nodes.last || raise("No code node running yet")
+      def current_root = current_node.root
 
-      def with_context(code)
-        @@contexts.push code
+      def with_node(code)
+        @@nodes.push code
         yield
       ensure
-        @@contexts.pop
+        @@nodes.pop
       end
 
       def src(src, &deferred)
         child = if deferred
-                  Deferred.new(parent: current_context, &deferred)
+                  Deferred.new(parent: current_node, &deferred)
                 else
-                  current_context.build_child(src:)
+                  current_node.build_child(src:)
                 end
-        current_context.add_child child
+        current_node.add_child child
         child
       end
       alias :` :src
@@ -152,16 +152,16 @@ module Cecil
 
       def content_for(key, &content_block)
         if content_block
-          current_root.content_for__add key, ContentForContainer.new(parent: current_context).with(&content_block)
+          current_root.content_for__add key, ContentForContainer.new(parent: current_node).with(&content_block)
         elsif content_for?(key)
           content_for!(key)
         else
-          current_context.add_child Deferred.new(parent: current_context) { content_for!(key) }
+          current_node.add_child Deferred.new(parent: current_node) { content_for!(key) }
         end
       end
 
       def content_for?(key) = current_root.content_for?(key)
-      def content_for!(key) = current_root.content_for__place key, current_context
+      def content_for!(key) = current_root.content_for__place key, current_node
 
       def call(out = $DEFAULT_OUTPUT, &)
         Root.new(self)
@@ -185,7 +185,7 @@ module Cecil
         @replaced = true
       end
 
-      self.class.with_context(self, &block) if block
+      self.class.with_node(self, &block) if block
 
       self
     end
