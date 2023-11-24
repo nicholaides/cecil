@@ -22,11 +22,11 @@ module Cecil
     def stringify = children.map(&:stringify).join
   end
 
-  class Deferred < AbstractNode
+  class DeferredNode < AbstractNode
     def initialize(parent:, &block)
       super(parent:)
       @block = block
-      add_child CodeContainer.new(parent: self)
+      add_child ContainerNode.new(parent: self)
     end
 
     def evaluate!
@@ -37,7 +37,7 @@ module Cecil
     def depth = parent.depth
   end
 
-  class Root < AbstractNode
+  class RootNode < AbstractNode
     def initialize(klass)
       super(parent: nil)
 
@@ -66,7 +66,7 @@ module Cecil
     end
   end
 
-  class CodeContainer < AbstractNode
+  class ContainerNode < AbstractNode
     def with(&)
       root.with_node(self, &)
       self
@@ -77,7 +77,7 @@ module Cecil
     def depth = parent.depth
   end
 
-  class ContentForContainer < CodeContainer
+  class ContentForNode < ContainerNode
     attr_accessor :location_parent
 
     def place_content(new_parent)
@@ -117,7 +117,7 @@ module Cecil
       def src(src) = add_node current_node.build_child(src:)
       alias :` :src
 
-      def defer(&) = add_node Deferred.new(parent: current_node, &)
+      def defer(&) = add_node DeferredNode.new(parent: current_node, &)
 
       def add_node(child)
         current_node.add_child child
@@ -126,11 +126,11 @@ module Cecil
 
       def content_for(key, &content_block)
         if content_block
-          current_root.content_for__add key, ContentForContainer.new(parent: current_node).with(&content_block)
+          current_root.content_for__add key, ContentForNode.new(parent: current_node).with(&content_block)
         elsif content_for?(key)
           content_for!(key)
         else
-          current_node.add_child Deferred.new(parent: current_node) { content_for!(key) }
+          current_node.add_child DeferredNode.new(parent: current_node) { content_for!(key) }
         end
       end
 
@@ -138,12 +138,12 @@ module Cecil
       def content_for!(key) = current_root.content_for__place key, current_node
 
       def call(out = $DEFAULT_OUTPUT, &)
-        Root.new(self)
-            .tap { _1.with { instance_eval(&) } }
-            .evaluate!
-            .stringify
-            .lstrip
-            .then { out << _1 }
+        RootNode.new(self)
+                .tap { _1.with { instance_eval(&) } }
+                .evaluate!
+                .stringify
+                .lstrip
+                .then { out << _1 }
       end
 
       def generate_string(&) = call("", &)
