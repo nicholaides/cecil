@@ -4,15 +4,17 @@ module Cecil
   class AbstractNode
     attr_accessor :parent, :children
 
-    def initialize(parent:, children: [])
+    def initialize(parent:)
       self.parent = parent
-      self.children = children
     end
 
     def root = parent.root
     def depth = parent.depth + 1
 
-    def add_child(child) = children << child
+    def add_child(child)
+      self.children ||= []
+      children << child
+    end
 
     def evaluate!
       children&.map!(&:evaluate!)
@@ -90,7 +92,7 @@ module Cecil
 
   class Code < AbstractNode
     def initialize(src:, parent:)
-      super(parent:, children: nil)
+      super(parent:)
 
       @src = src
 
