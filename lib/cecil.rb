@@ -1,7 +1,7 @@
 require_relative "cecil/version"
 
 module Cecil
-  class Node
+  class AbstractNode
     attr_accessor :parent, :children
 
     def initialize(parent:, children: [])
@@ -22,7 +22,7 @@ module Cecil
     def stringify = children.map(&:stringify).join
   end
 
-  class Deferred < Node
+  class Deferred < AbstractNode
     def initialize(parent:, &block)
       super(parent:)
       @block = block
@@ -37,7 +37,7 @@ module Cecil
     def depth = parent.depth
   end
 
-  class Root < Node
+  class Root < AbstractNode
     def initialize(klass)
       super(parent: nil)
 
@@ -66,7 +66,7 @@ module Cecil
     end
   end
 
-  class CodeContainer < Node
+  class CodeContainer < AbstractNode
     def with(&)
       root.with_node(self, &)
       self
@@ -88,7 +88,7 @@ module Cecil
     def depth = location_parent.depth
   end
 
-  class Code < Node
+  class Code < AbstractNode
     def root = @parent.root
 
     def initialize(src:, parent:)
