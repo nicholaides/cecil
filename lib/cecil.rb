@@ -285,22 +285,6 @@ module Cecil
     end
   end
 
-  require "json"
-  class TypeScript < Code
-    def indent_chars = "  "
-
-    module Helpers
-      def t(items) = Array(items).join(" | ")
-      def l(items) = Array(items).join(", ")
-      def s(item) = item.to_s.to_json[1...-1]
-      def j(item) = item.to_json
-    end
-
-    class << self
-      include Helpers
-    end
-  end
-
   def self.interpolate(template, placeholders, args, options)
     return unless template
 
