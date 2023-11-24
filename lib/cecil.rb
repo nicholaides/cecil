@@ -1,22 +1,20 @@
 require_relative "cecil/version"
 
 module Cecil
-  module ChildNode
-    def parent = @parent
+  class AbstractNode
+    attr_accessor :parent, :children
 
-    def parent=(parent)
-      @parent = parent
+    def initialize(parent:)
+      self.parent = parent
     end
 
     def root = parent.root
     def depth = parent.depth + 1
-  end
 
-  module ParentNode
-    attr_reader :children
-
-    def init_children = @children = []
-    def add_child(child) = @children << child
+    def add_child(child)
+      self.children ||= []
+      children << child
+    end
 
     def evaluate!
       children&.map!(&:evaluate!)
@@ -26,27 +24,26 @@ module Cecil
     def stringify = children.map(&:stringify).join
   end
 
-  class Deferred
-    include ChildNode
-
+  class DeferredNode < AbstractNode
     def initialize(parent:, &block)
+      super(parent:)
       @block = block
-      @parent = parent
-      @child = CodeContainer.new(parent: self)
+      add_child ContainerNode.new(parent: self)
     end
 
-    def evaluate! = @child.with(&@block)
+    def evaluate!
+      children => [child]
+      child.with(&@block)
+    end
 
     def depth = parent.depth
   end
 
-  class Root
-    include ParentNode
-
+  class RootNode < AbstractNode
     def initialize(klass)
-      @klass = klass
-      init_children
+      super(parent: nil)
 
+      @klass = klass
       @content_for = Hash.new { |hash, key| hash[key] = [] }
     end
 
@@ -54,38 +51,26 @@ module Cecil
     def depth = -1
 
     def with(&)
-      @klass.with_context(self, &)
+      @klass.with_node(self, &)
       self
     end
 
-    def with_context(context, &)
-      @klass.with_context(context, &)
-    end
+    def with_node(node, &) = @klass.with_node(node, &)
 
     def build_child(src:, parent: self) = @klass.new(src:, parent:)
 
     def content_for?(key) = @content_for.key?(key)
 
-    def content_for__add(key, child_container)
-      @content_for[key] << child_container
-    end
+    def content_for__add(key, child_container) = @content_for[key] << child_container
 
     def content_for__place(key, new_parent)
       @content_for.fetch(key).each { _1.place_content new_parent }
     end
   end
 
-  class CodeContainer
-    include ChildNode
-    include ParentNode
-
-    def initialize(parent:)
-      @parent = parent
-      init_children
-    end
-
+  class ContainerNode < AbstractNode
     def with(&)
-      root.with_context(self, &)
+      root.with_node(self, &)
       self
     end
 
@@ -94,7 +79,7 @@ module Cecil
     def depth = parent.depth
   end
 
-  class ContentForContainer < CodeContainer
+  class ContentForNode < ContainerNode
     attr_accessor :location_parent
 
     def place_content(new_parent)
@@ -105,15 +90,11 @@ module Cecil
     def depth = location_parent.depth
   end
 
-  class Code
-    include ChildNode
-    include ParentNode
-
-    def root = @parent.root
-
+  class Code < AbstractNode
     def initialize(src:, parent:)
+      super(parent:)
+
       @src = src
-      @parent = parent
 
       @placeholders = src
                       .to_enum(:scan, placeholder_re)
@@ -124,52 +105,47 @@ module Cecil
     def build_child(src:) = root.build_child(src:, parent: self)
 
     class << self
-      @@contexts = []
-      def current_context = @@contexts.last || raise("No code context running yet")
-      def current_root = current_context.root
+      @@nodes = []
+      def current_node = @@nodes.last || raise("No code node running yet")
+      def current_root = current_node.root
 
-      def with_context(code)
-        @@contexts.push code
+      def with_node(code)
+        @@nodes.push code
         yield
       ensure
-        @@contexts.pop
+        @@nodes.pop
       end
 
-      def src(src, &deferred)
-        child = if deferred
-                  Deferred.new(parent: current_context, &deferred)
-                else
-                  current_context.build_child(src:)
-                end
-        current_context.add_child child
-        child
-      end
+      def src(src) = add_node current_node.build_child(src:)
       alias :` :src
 
-      def defer(&)
-        src(nil, &)
+      def defer(&) = add_node DeferredNode.new(parent: current_node, &)
+
+      def add_node(child)
+        current_node.add_child child
+        child
       end
 
       def content_for(key, &content_block)
         if content_block
-          current_root.content_for__add key, ContentForContainer.new(parent: current_context).with(&content_block)
+          current_root.content_for__add key, ContentForNode.new(parent: current_node).with(&content_block)
         elsif content_for?(key)
           content_for!(key)
         else
-          current_context.add_child Deferred.new(parent: current_context) { content_for!(key) }
+          current_node.add_child DeferredNode.new(parent: current_node) { content_for!(key) }
         end
       end
 
       def content_for?(key) = current_root.content_for?(key)
-      def content_for!(key) = current_root.content_for__place key, current_context
+      def content_for!(key) = current_root.content_for__place key, current_node
 
       def call(out = $DEFAULT_OUTPUT, &)
-        Root.new(self)
-            .tap { _1.with { instance_eval(&) } }
-            .evaluate!
-            .stringify
-            .lstrip
-            .then { out << _1 }
+        RootNode.new(self)
+                .tap { _1.with { instance_eval(&) } }
+                .evaluate!
+                .stringify
+                .lstrip
+                .then { out << _1 }
       end
 
       def generate_string(&) = call("", &)
@@ -178,14 +154,14 @@ module Cecil
     def with(*args, **options, &block)
       raise "Expects args or opts but not both" if args.any? && options.any?
 
-      init_children
+      self.children = []
 
       if @placeholders.any?
         @src = Cecil.interpolate(@src, @placeholders, args, options)
         @replaced = true
       end
 
-      self.class.with_context(self, &block) if block
+      self.class.with_node(self, &block) if block
 
       self
     end
