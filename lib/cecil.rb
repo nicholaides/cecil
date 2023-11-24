@@ -4,8 +4,9 @@ module Cecil
   class Node
     attr_accessor :parent, :children
 
-    def initialize
-      self.children = []
+    def initialize(parent:, children: [])
+      self.parent = parent
+      self.children = children
     end
 
     def root = parent.root
@@ -23,8 +24,7 @@ module Cecil
 
   class Deferred < Node
     def initialize(parent:, &block)
-      super()
-      self.parent = parent
+      super(parent:)
       @block = block
       add_child CodeContainer.new(parent: self)
     end
@@ -39,7 +39,7 @@ module Cecil
 
   class Root < Node
     def initialize(klass)
-      super()
+      super(parent: nil)
 
       @klass = klass
       @content_for = Hash.new { |hash, key| hash[key] = [] }
@@ -67,11 +67,6 @@ module Cecil
   end
 
   class CodeContainer < Node
-    def initialize(parent:)
-      super()
-      self.parent = parent
-    end
-
     def with(&)
       root.with_node(self, &)
       self
@@ -97,9 +92,7 @@ module Cecil
     def root = @parent.root
 
     def initialize(src:, parent:)
-      super()
-      self.parent = parent
-      self.children = nil
+      super(parent:, children: nil)
 
       @src = src
 
