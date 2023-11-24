@@ -141,7 +141,7 @@ module Cecil
 
       def call(out = $DEFAULT_OUTPUT, &)
         RootNode.new(self)
-                .tap { _1.with { instance_eval(&) } }
+                .tap { _1.with { instance_exec(&) } }
                 .evaluate!
                 .stringify
                 .lstrip
