@@ -89,8 +89,6 @@ module Cecil
   end
 
   class Code < AbstractNode
-    def root = @parent.root
-
     def initialize(src:, parent:)
       super(parent:, children: nil)
 
@@ -116,19 +114,14 @@ module Cecil
         @@nodes.pop
       end
 
-      def src(src, &deferred)
-        child = if deferred
-                  Deferred.new(parent: current_node, &deferred)
-                else
-                  current_node.build_child(src:)
-                end
-        current_node.add_child child
-        child
-      end
+      def src(src) = add_node current_node.build_child(src:)
       alias :` :src
 
-      def defer(&)
-        src(nil, &)
+      def defer(&) = add_node Deferred.new(parent: current_node, &)
+
+      def add_node(child)
+        current_node.add_child child
+        child
       end
 
       def content_for(key, &content_block)
