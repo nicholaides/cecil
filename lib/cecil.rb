@@ -14,6 +14,7 @@ module Cecil
     def add_child(child)
       self.children ||= []
       children << child
+      child
     end
 
     def evaluate!
@@ -116,16 +117,15 @@ module Cecil
         @@nodes.pop
       end
 
+      # dx/block
       def src(src) = add_node current_node.build_child(src:)
-      alias :` :src
 
+      # dx/block
       def defer(&) = add_node DeferredNode.new(parent: current_node, &)
 
-      def add_node(child)
-        current_node.add_child child
-        child
-      end
+      def add_node(child) = current_node.add_child child
 
+      # dx/block
       def content_for(key, &content_block)
         if content_block
           current_root.content_for__add key, ContentForNode.new(parent: current_node).with(&content_block)
@@ -136,21 +136,34 @@ module Cecil
         end
       end
 
+      # dx/block
       def content_for?(key) = current_root.content_for?(key)
+
+      # dx/block
       def content_for!(key) = current_root.content_for__place key, current_node
 
+      # dx/customization
+      def helpers(&)
+        @helpers = Module.new(&) if block_given?
+        @helpers ||= Module.new
+        @helpers
+      end
+
+      # dx/module
       def call(out = $DEFAULT_OUTPUT, &)
         RootNode.new(self)
-                .tap { _1.with { instance_exec(&) } }
+                .tap { _1.with { BlockContext.new(self, helpers).instance_exec(&) } }
                 .evaluate!
                 .stringify
                 .lstrip
                 .then { out << _1 }
       end
 
+      # dx/module
       def generate_string(&) = call("", &)
     end
 
+    # dx/node
     def with(*args, **options, &block)
       raise "Expects args or opts but not both" if args.any? && options.any?
 
@@ -166,7 +179,10 @@ module Cecil
       self
     end
 
+    # dx/node
     alias call with
+
+    # dx/node
     alias [] with
 
     def stringify
@@ -182,6 +198,7 @@ module Cecil
       srcs.join
     end
 
+    # configurable
     def block_ending_pairs
       {
         "{" => "}",
@@ -194,6 +211,7 @@ module Cecil
       }
     end
 
+    # configurable
     def placeholder_delimiting_pairs
       {
         "{" => "}",
@@ -218,6 +236,7 @@ module Cecil
       reindent "#{stack.join.strip}\n", depth
     end
 
+    # dx/node
     def <<(item)
       case item
       in Code then nil
@@ -225,7 +244,10 @@ module Cecil
       end
     end
 
+    # configurable
     def placeholder_ident_re = /[[:alnum:]_]+/
+
+    # configurable
     def placeholder_start = /\$/
 
     def placeholder_re
@@ -265,6 +287,7 @@ module Cecil
       src
     end
 
+    # configurable
     def indent_chars = "    "
 
     def reindent(src, depth)
@@ -305,7 +328,8 @@ module Cecil
       raise "Mismatch?" if match_idents.size != args.size
 
       replace(template, placeholders, match_idents.zip(args).to_h)
-    else raise "Expects args or opts but not both: #{subs.inspect}"
+    else
+      raise "Expects args or opts but not both: #{subs.inspect}"
     end
   end
 
@@ -319,5 +343,26 @@ module Cecil
         new_src[placeholder.range] = value.to_s
       end
     end
+  end
+
+  # TODO: test that it can access methods (and therefore should not inherit from BasicObject)
+  # TODO: test that helpers works
+  class BlockContext
+    def initialize(builder, helpers)
+      @builder = builder
+      extend helpers
+    end
+
+    # def src, ``
+    def src(...) = @builder.src(...)
+    alias :` :src
+
+    # def defer
+    def defer(...) = @builder.defer(...)
+
+    # def content_for, def content_for?, content_for!
+    def content_for(...) = @builder.content_for(...)
+    def content_for?(...) = @builder.content_for?(...)
+    def content_for!(...) = @builder.content_for!(...)
   end
 end
