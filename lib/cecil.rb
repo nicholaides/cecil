@@ -22,7 +22,7 @@ module Cecil
       self
     end
 
-    def stringify = children.map(&:stringify).join
+    def stringify(config) = children.map { _1.stringify(config) }.join
   end
 
   class DeferredNode < AbstractNode
@@ -43,6 +43,8 @@ module Cecil
   end
 
   class RootNode < AbstractNode
+    attr_accessor :builder
+
     def initialize(builder)
       super(parent: nil)
 
@@ -94,49 +96,48 @@ module Cecil
     def depth = location_parent.depth
   end
 
-  module Builder
-    class Generic
-      attr_accessor :root
+  class Builder
+    attr_accessor :root, :config
 
-      def initialize
-        @root = RootNode.new(self)
-        @nodes = [@root]
-      end
-
-      def current_node = @nodes.last || raise("No code node running yet")
-
-      def with_node(code)
-        @nodes.push code
-        yield
-      ensure
-        @nodes.pop
-      end
-
-      # dx/block
-      def src(src) = add_node current_node.build_child(src:)
-
-      # dx/block
-      def defer(&) = add_node DeferredNode.new(parent: current_node, &)
-
-      def add_node(child) = current_node.add_child child
-
-      # dx/block
-      def content_for(key, &content_block)
-        if content_block
-          root.content_for__add key, ContentForNode.new(parent: current_node).with(&content_block)
-        elsif content_for?(key)
-          content_for!(key)
-        else
-          current_node.add_child DeferredNode.new(parent: current_node) { content_for!(key) }
-        end
-      end
-
-      # dx/block
-      def content_for?(key) = root.content_for?(key)
-
-      # dx/block
-      def content_for!(key) = root.content_for__place key, current_node
+    def initialize(config)
+      @config = config
+      @root = RootNode.new(self)
+      @nodes = [@root]
     end
+
+    def current_node = @nodes.last || raise("No code node running yet")
+
+    def with_node(code)
+      @nodes.push code
+      yield
+    ensure
+      @nodes.pop
+    end
+
+    # dx/block
+    def src(src) = add_node current_node.build_child(src:)
+
+    # dx/block
+    def defer(&) = add_node DeferredNode.new(parent: current_node, &)
+
+    def add_node(child) = current_node.add_child child
+
+    # dx/block
+    def content_for(key, &content_block)
+      if content_block
+        root.content_for__add key, ContentForNode.new(parent: current_node).with(&content_block)
+      elsif content_for?(key)
+        content_for!(key)
+      else
+        current_node.add_child DeferredNode.new(parent: current_node) { content_for!(key) }
+      end
+    end
+
+    # dx/block
+    def content_for?(key) = root.content_for?(key)
+
+    # dx/block
+    def content_for!(key) = root.content_for__place key, current_node
   end
 
   class CodeNode < AbstractNode
@@ -146,21 +147,12 @@ module Cecil
       @src = src
 
       @placeholders = src
-                      .to_enum(:scan, placeholder_re)
+                      .to_enum(:scan, placeholder_re(root.builder.config))
                       .map { Regexp.last_match }
                       .map { Cecil::CodeNode::Placeholder.new(_1) }
     end
 
     def build_child(src:) = root.build_child(src:, parent: self)
-
-    class << self
-      # dx/customization
-      def helpers(&)
-        @helpers = Module.new(&) if block_given?
-        @helpers ||= Module.new
-        @helpers
-      end
-    end
 
     # dx/node
     def with(*args, **options, &block)
@@ -184,55 +176,31 @@ module Cecil
     # dx/node
     alias [] with
 
-    def stringify
+    def stringify(config)
       raise "Mismatch?" if @placeholders.any? && !@replaced
 
-      srcs = [reformat]
+      srcs = [reformat(config)]
 
       if children
-        srcs += children.map(&:stringify)
-        srcs << close
+        srcs += children.map { _1.stringify(config) }
+        srcs << close(config)
       end
 
       srcs.join
     end
 
-    # configurable
-    def block_ending_pairs
-      {
-        "{" => "}",
-        "[" => "]",
-        "<" => ">",
-        "(" => ")",
-
-        " " => " ",
-        "\t" => "\t"
-      }
-    end
-
-    # configurable
-    def placeholder_delimiting_pairs
-      {
-        "{" => "}",
-        "[" => "]",
-        "<" => ">",
-        "(" => ")",
-        "" => ""
-      }
-    end
-
-    def close
+    def close(config)
       stack = []
 
       src = @src.strip
 
       while src.size > 0 # rubocop:disable Style/ZeroLengthPredicate
-        opener, closer = block_ending_pairs.detect { |l, _r| src.end_with?(l) } || break
+        opener, closer = config.block_ending_pairs.detect { |l, _r| src.end_with?(l) } || break
         stack.push closer
         src = src[0...-opener.size]
       end
 
-      Cecil.reindent("#{stack.join.strip}\n", depth, indent_chars)
+      Cecil.reindent("#{stack.join.strip}\n", depth, config.indent_chars)
     end
 
     # dx/node
@@ -243,22 +211,16 @@ module Cecil
       end
     end
 
-    # configurable
-    def placeholder_ident_re = /[[:alnum:]_]+/
-
-    # configurable
-    def placeholder_start = /\$/
-
-    def placeholder_re
+    def placeholder_re(config)
       /
-        #{placeholder_start}
+        #{config.placeholder_start}
         #{
           Regexp.union(
-            placeholder_delimiting_pairs.map do |pstart, pend|
+            config.placeholder_delimiting_pairs.map do |pstart, pend|
               /
                 #{Regexp.quote pstart}
                 (?<placeholder>
-                  #{placeholder_ident_re}
+                  #{config.placeholder_ident_re}
                 )
                 #{Regexp.quote pend}
               /x
@@ -279,15 +241,52 @@ module Cecil
       def range = offset_start...offset_end
     end
 
-    def reformat
-      src = Cecil.reindent(@src, depth, indent_chars)
+    def reformat(config)
+      src = Cecil.reindent(@src, depth, config.indent_chars)
 
       src += "\n" unless src.end_with?("\n")
       src
     end
+  end
 
-    # configurable
+  class Configuration
+    class << self
+      def helpers(&)
+        @helpers = Module.new(&) if block_given?
+        @helpers ||= Module.new
+        @helpers
+      end
+    end
+
+    def helpers = self.class.helpers
+
+    def block_ending_pairs
+      {
+        "{" => "}",
+        "[" => "]",
+        "<" => ">",
+        "(" => ")",
+
+        " " => " ",
+        "\t" => "\t"
+      }
+    end
+
+    def placeholder_delimiting_pairs
+      {
+        "{" => "}",
+        "[" => "]",
+        "<" => ">",
+        "(" => ")",
+        "" => ""
+      }
+    end
+
     def indent_chars = "    "
+
+    def placeholder_ident_re = /[[:alnum:]_]+/
+
+    def placeholder_start = /\$/
   end
 
   module Code
@@ -295,12 +294,13 @@ module Cecil
 
     # dx/module
     def call(out = $DEFAULT_OUTPUT, &)
-      builder = Builder::Generic.new
-      BlockContext.new(builder, CodeNode.helpers).instance_exec(&)
+      config = Configuration.new
+      builder = Builder.new(config)
+      BlockContext.new(builder, config.helpers).instance_exec(&)
       builder
         .root
         .evaluate!
-        .stringify
+        .stringify(config)
         .lstrip
         .then { out << _1 }
     end
