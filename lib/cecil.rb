@@ -5,23 +5,30 @@ module Cecil
     attr_accessor :parent, :children
 
     def initialize(parent:)
-      self.parent = parent
+      @parent = parent
+      @children = []
     end
 
+    def builder = root.builder
     def root = parent.root
     def depth = parent.depth + 1
 
-    def add_child(child)
-      self.children ||= []
-      children << child
-    end
+    def add_child(child) = children << child
 
     def evaluate!
       children&.map!(&:evaluate!)
       self
     end
 
-    def stringify = children.map(&:stringify).join
+    def stringify(config) = children.map { _1.stringify(config) }.join
+
+    def replace_child(old_node, new_node)
+      if idx = children.index(old_node)
+        children[idx] = new_node
+      else
+        children.each { _1.replace_child(old_node, new_node) }
+      end
+    end
   end
 
   class DeferredNode < AbstractNode
@@ -31,46 +38,36 @@ module Cecil
       add_child ContainerNode.new(parent: self)
     end
 
-    def evaluate!
-      children => [child]
-      child.with(&@block)
+    def child
+      children => [container]
+      container
     end
+
+    def evaluate! = child.with(&@block)
 
     def depth = parent.depth
   end
 
   class RootNode < AbstractNode
-    def initialize(klass)
+    attr_accessor :builder
+
+    def initialize(builder)
       super(parent: nil)
 
-      @klass = klass
-      @content_for = Hash.new { |hash, key| hash[key] = [] }
+      @builder = builder
     end
 
     def root = self
     def depth = -1
 
-    def with(&)
-      @klass.with_node(self, &)
-      self
-    end
+    def build_node(...) = builder.build_node(...)
 
-    def with_node(node, &) = @klass.with_node(node, &)
-
-    def build_child(src:, parent: self) = @klass.new(src:, parent:)
-
-    def content_for?(key) = @content_for.key?(key)
-
-    def content_for__add(key, child_container) = @content_for[key] << child_container
-
-    def content_for__place(key, new_parent)
-      @content_for.fetch(key).each { _1.place_content new_parent }
-    end
+    def build_child(src:, parent: self) = CodeNode.new(src:, parent:)
   end
 
   class ContainerNode < AbstractNode
     def with(&)
-      root.with_node(self, &)
+      root.build_node(self, &)
       self
     end
 
@@ -90,97 +87,159 @@ module Cecil
     def depth = location_parent.depth
   end
 
-  class Code < AbstractNode
+  class Builder
+    attr_accessor :root, :config
+
+    def initialize(config)
+      @config = config
+      @root = RootNode.new(self)
+      @nodes = [@root]
+      @content_for = Hash.new { |hash, key| hash[key] = [] }
+    end
+
+    def current_node = @nodes.last || raise("No code node running yet")
+    def replace_node(...) = current_node.replace_child(...)
+
+    def build_node(code)
+      @nodes.push code
+      yield
+    ensure
+      @nodes.pop
+    end
+
+    def src(src) = add_node current_node.build_child(src:)
+
+    def defer(&) = add_node DeferredNode.new(parent: current_node, &)
+
+    def add_node(child)
+      current_node.add_child(child)
+      child
+    end
+
+    def content_for(key, &content_block)
+      if content_block
+        content_for__add key, ContentForNode.new(parent: current_node).with(&content_block)
+      elsif content_for?(key)
+        content_for!(key)
+      else
+        current_node.add_child DeferredNode.new(parent: current_node) { content_for!(key) }
+      end
+    end
+
+    def content_for?(key) = @content_for.key?(key)
+
+    def content_for__add(key, child_container) = @content_for[key] << child_container
+
+    def content_for!(key)
+      @content_for.fetch(key).each { _1.place_content current_node }
+    end
+  end
+
+  class InterpolatedNode < AbstractNode
+    def initialize(src:, parent:, placeholders:, args:, options:, &block)
+      super(parent:)
+
+      @src = placeholders.any? ? Cecil.interpolate(src, placeholders, args, options) : src
+
+      return unless block
+
+      self.children = [] # TODO: test this
+      root.build_node(self, &block)
+    end
+
+    def build_child(src:) = root.build_child(src:, parent: self)
+
+    def stringify(config)
+      src = Cecil.reindent(@src, depth, config.indent_chars)
+      src += "\n" unless src.end_with?("\n")
+      srcs = [src]
+
+      srcs += children.map { _1.stringify(config) }
+
+      close = begin
+        stack = []
+
+        src = @src.strip
+
+        while src.size > 0 # rubocop:disable Style/ZeroLengthPredicate
+          opener, closer = config.block_ending_pairs.detect { |l, _r| src.end_with?(l) } || break
+          stack.push closer
+          src = src[0...-opener.size]
+        end
+
+        Cecil.reindent("#{stack.join.strip}\n", depth, config.indent_chars)
+      end
+      srcs << close
+
+      srcs.join
+    end
+
+    # dx/node
+    def <<(item)
+      case item
+      in CodeNode then nil
+      in String then builder.src(item)
+      end
+    end
+  end
+
+  class CodeNode < AbstractNode
     def initialize(src:, parent:)
       super(parent:)
 
       @src = src
 
-      @placeholders = src
-                      .to_enum(:scan, placeholder_re)
-                      .map { Regexp.last_match }
-                      .map { Cecil::Code::Placeholder.new(_1) }
+      @placeholders ||= @src
+                        .to_enum(:scan, builder.config.placeholder_re)
+                        .map { Regexp.last_match }
+                        .map { Cecil::Placeholder.new(_1) }
     end
 
-    def build_child(src:) = root.build_child(src:, parent: self)
-
-    class << self
-      @@nodes = []
-      def current_node = @@nodes.last || raise("No code node running yet")
-      def current_root = current_node.root
-
-      def with_node(code)
-        @@nodes.push code
-        yield
-      ensure
-        @@nodes.pop
-      end
-
-      def src(src) = add_node current_node.build_child(src:)
-      alias :` :src
-
-      def defer(&) = add_node DeferredNode.new(parent: current_node, &)
-
-      def add_node(child)
-        current_node.add_child child
-        child
-      end
-
-      def content_for(key, &content_block)
-        if content_block
-          current_root.content_for__add key, ContentForNode.new(parent: current_node).with(&content_block)
-        elsif content_for?(key)
-          content_for!(key)
-        else
-          current_node.add_child DeferredNode.new(parent: current_node) { content_for!(key) }
-        end
-      end
-
-      def content_for?(key) = current_root.content_for?(key)
-      def content_for!(key) = current_root.content_for__place key, current_node
-
-      def call(out = $DEFAULT_OUTPUT, &)
-        RootNode.new(self)
-                .tap { _1.with { instance_exec(&) } }
-                .evaluate!
-                .stringify
-                .lstrip
-                .then { out << _1 }
-      end
-
-      def generate_string(&) = call("", &)
-    end
-
-    def with(*args, **options, &block)
+    # dx/node
+    def with(*args, **options, &)
       raise "Expects args or opts but not both" if args.any? && options.any?
 
-      self.children = []
-
-      if @placeholders.any?
-        @src = Cecil.interpolate(@src, @placeholders, args, options)
-        @replaced = true
-      end
-
-      self.class.with_node(self, &block) if block
-
-      self
+      InterpolatedNode
+        .new(src: @src, parent:, placeholders: @placeholders, args:, options:, &)
+        .tap { builder.replace_node(self, _1) }
     end
 
+    # dx/node
     alias call with
+
+    # dx/node
     alias [] with
 
-    def stringify
-      raise "Mismatch?" if @placeholders.any? && !@replaced
+    def stringify(config)
+      raise "Mismatch?" if @placeholders.any?
 
-      srcs = [reformat]
-
-      if children
-        srcs += children.map(&:stringify)
-        srcs << close
-      end
-
-      srcs.join
+      src = Cecil.reindent(@src, depth, config.indent_chars)
+      src += "\n" unless src.end_with?("\n")
+      src
     end
+  end
+
+  class Placeholder
+    attr_reader :ident, :offset_start, :offset_end
+
+    def initialize(match)
+      @ident = match[:placeholder]
+      @offset_start, @offset_end = match.offset(0)
+    end
+
+    def range = offset_start...offset_end
+  end
+
+  class Configuration
+    class << self
+      def helpers(&)
+        @helpers = Module.new(&) if block_given?
+        @helpers ||= Module.new
+        @helpers
+      end
+    end
+
+    def helpers = self.class.helpers
 
     def block_ending_pairs
       {
@@ -204,28 +263,10 @@ module Cecil
       }
     end
 
-    def close
-      stack = []
-
-      src = @src.strip
-
-      while src.size > 0 # rubocop:disable Style/ZeroLengthPredicate
-        opener, closer = block_ending_pairs.detect { |l, _r| src.end_with?(l) } || break
-        stack.push closer
-        src = src[0...-opener.size]
-      end
-
-      reindent "#{stack.join.strip}\n", depth
-    end
-
-    def <<(item)
-      case item
-      in Code then nil
-      in String then self.class.src(item)
-      end
-    end
+    def indent_chars = "    "
 
     def placeholder_ident_re = /[[:alnum:]_]+/
+
     def placeholder_start = /\$/
 
     def placeholder_re
@@ -246,43 +287,39 @@ module Cecil
         }
       /x
     end
+  end
 
-    class Placeholder
-      attr_reader :ident, :offset_start, :offset_end
+  class Code < Configuration
+    def self.call(out = $DEFAULT_OUTPUT, &)
+      config = new
+      builder = Builder.new(config)
+      BlockContext.new(builder, config.helpers).instance_exec(&)
+      builder
+        .root
+        .evaluate!
+        .stringify(config)
+        .lstrip
+        .then { out << _1 }
+    end
 
-      def initialize(match)
-        @ident = match[:placeholder]
-        @offset_start, @offset_end = match.offset(0)
+    def self.generate_string(&) = call("", &)
+  end
+
+  def self.reindent(src, depth, indent_chars)
+    lines = src.lines
+    lines.shift if lines.first == "\n"
+
+    indented_lines =
+      if lines.first =~ /^\S/
+        lines.drop(1)
+      else
+        lines.dup
       end
 
-      def range = offset_start...offset_end
-    end
+    min_indent = indented_lines.grep(/\S/).map { _1.match(/^[ \t]*/)[0].size }.min || 0
 
-    def reformat
-      src = reindent(@src, depth)
-
-      src += "\n" unless src.end_with?("\n")
-      src
-    end
-
-    def indent_chars = "    "
-
-    def reindent(src, depth)
-      lines = src.lines
-      lines.shift if lines.first == "\n"
-
-      indented_lines =
-        if lines.first =~ /^\S/
-          lines.drop(1)
-        else
-          lines.dup
-        end
-
-      min_indent = indented_lines.grep(/\S/).map { _1.match(/^[ \t]*/)[0].size }.min || 0
-
-      lines = lines.map { _1.sub(/^[ \t]{0,#{min_indent}}/, indent_chars * depth) }
-      lines.join
-    end
+    lines = lines.map { _1.sub(/^[ \t]{0,#{min_indent}}/, indent_chars * depth) }
+    lines.join
   end
 
   def self.interpolate(template, placeholders, args, options)
@@ -305,7 +342,8 @@ module Cecil
       raise "Mismatch?" if match_idents.size != args.size
 
       replace(template, placeholders, match_idents.zip(args).to_h)
-    else raise "Expects args or opts but not both: #{subs.inspect}"
+    else
+      raise "Expects args or opts but not both: #{subs.inspect}"
     end
   end
 
@@ -319,5 +357,23 @@ module Cecil
         new_src[placeholder.range] = value.to_s
       end
     end
+  end
+
+  # TODO: test that it can access methods (and therefore should not inherit from BasicObject)
+  # TODO: test that helpers works
+  class BlockContext
+    def initialize(builder, helpers)
+      @builder = builder
+      extend helpers
+    end
+
+    def src(...) = @builder.src(...)
+    alias :` :src
+
+    def defer(...) = @builder.defer(...)
+
+    def content_for(...) = @builder.content_for(...)
+    def content_for?(...) = @builder.content_for?(...)
+    def content_for!(...) = @builder.content_for!(...)
   end
 end
