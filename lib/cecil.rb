@@ -32,10 +32,12 @@ module Cecil
       add_child ContainerNode.new(parent: self)
     end
 
-    def evaluate!
-      children => [child]
-      child.with(&@block)
+    def child
+      children => [container]
+      container
     end
+
+    def evaluate! = child.with(&@block)
 
     def depth = parent.depth
   end
@@ -56,9 +58,10 @@ module Cecil
       self
     end
 
-    def with_node(node, &) = @builder.with_node(node, &)
+    def with_node(...) = @builder.with_node(...)
+    def src(...) = @builder.src(...)
 
-    def build_child(src:, parent: self) = @builder.new(src:, parent:)
+    def build_child(src:, parent: self) = CodeNode.new(src:, parent:)
 
     def content_for?(key) = @content_for.key?(key)
 
@@ -67,8 +70,6 @@ module Cecil
     def content_for__place(key, new_parent)
       @content_for.fetch(key).each { _1.place_content new_parent }
     end
-
-    def src(...) = @builder.src(...)
   end
 
   class ContainerNode < AbstractNode
@@ -93,30 +94,22 @@ module Cecil
     def depth = location_parent.depth
   end
 
-  class Code < AbstractNode
-    def initialize(src:, parent:)
-      super(parent:)
+  module Builder
+    class Generic
+      attr_accessor :root
 
-      @src = src
+      def initialize
+        @root = RootNode.new(self)
+        @nodes = [@root]
+      end
 
-      @placeholders = src
-                      .to_enum(:scan, placeholder_re)
-                      .map { Regexp.last_match }
-                      .map { Cecil::Code::Placeholder.new(_1) }
-    end
-
-    def build_child(src:) = root.build_child(src:, parent: self)
-
-    class << self
-      @@nodes = []
-      def current_node = @@nodes.last || raise("No code node running yet")
-      def current_root = current_node.root
+      def current_node = @nodes.last || raise("No code node running yet")
 
       def with_node(code)
-        @@nodes.push code
+        @nodes.push code
         yield
       ensure
-        @@nodes.pop
+        @nodes.pop
       end
 
       # dx/block
@@ -130,7 +123,7 @@ module Cecil
       # dx/block
       def content_for(key, &content_block)
         if content_block
-          current_root.content_for__add key, ContentForNode.new(parent: current_node).with(&content_block)
+          root.content_for__add key, ContentForNode.new(parent: current_node).with(&content_block)
         elsif content_for?(key)
           content_for!(key)
         else
@@ -139,30 +132,34 @@ module Cecil
       end
 
       # dx/block
-      def content_for?(key) = current_root.content_for?(key)
+      def content_for?(key) = root.content_for?(key)
 
       # dx/block
-      def content_for!(key) = current_root.content_for__place key, current_node
+      def content_for!(key) = root.content_for__place key, current_node
+    end
+  end
 
+  class CodeNode < AbstractNode
+    def initialize(src:, parent:)
+      super(parent:)
+
+      @src = src
+
+      @placeholders = src
+                      .to_enum(:scan, placeholder_re)
+                      .map { Regexp.last_match }
+                      .map { Cecil::CodeNode::Placeholder.new(_1) }
+    end
+
+    def build_child(src:) = root.build_child(src:, parent: self)
+
+    class << self
       # dx/customization
       def helpers(&)
         @helpers = Module.new(&) if block_given?
         @helpers ||= Module.new
         @helpers
       end
-
-      # dx/module
-      def call(out = $DEFAULT_OUTPUT, &)
-        RootNode.new(self)
-                .tap { _1.with { BlockContext.new(self, helpers).instance_exec(&) } }
-                .evaluate!
-                .stringify
-                .lstrip
-                .then { out << _1 }
-      end
-
-      # dx/module
-      def generate_string(&) = call("", &)
     end
 
     # dx/node
@@ -176,7 +173,7 @@ module Cecil
         @replaced = true
       end
 
-      self.class.with_node(self, &block) if block
+      root.with_node(self, &block) if block
 
       self
     end
@@ -235,13 +232,13 @@ module Cecil
         src = src[0...-opener.size]
       end
 
-      reindent "#{stack.join.strip}\n", depth
+      Cecil.reindent("#{stack.join.strip}\n", depth, indent_chars)
     end
 
     # dx/node
     def <<(item)
       case item
-      in Code then nil
+      in CodeNode then nil
       in String then root.src(item)
       end
     end
@@ -283,7 +280,7 @@ module Cecil
     end
 
     def reformat
-      src = reindent(@src, depth)
+      src = Cecil.reindent(@src, depth, indent_chars)
 
       src += "\n" unless src.end_with?("\n")
       src
@@ -291,23 +288,42 @@ module Cecil
 
     # configurable
     def indent_chars = "    "
+  end
 
-    def reindent(src, depth)
-      lines = src.lines
-      lines.shift if lines.first == "\n"
+  module Code
+    module_function
 
-      indented_lines =
-        if lines.first =~ /^\S/
-          lines.drop(1)
-        else
-          lines.dup
-        end
-
-      min_indent = indented_lines.grep(/\S/).map { _1.match(/^[ \t]*/)[0].size }.min || 0
-
-      lines = lines.map { _1.sub(/^[ \t]{0,#{min_indent}}/, indent_chars * depth) }
-      lines.join
+    # dx/module
+    def call(out = $DEFAULT_OUTPUT, &)
+      builder = Builder::Generic.new
+      BlockContext.new(builder, CodeNode.helpers).instance_exec(&)
+      builder
+        .root
+        .evaluate!
+        .stringify
+        .lstrip
+        .then { out << _1 }
     end
+
+    # dx/module
+    def generate_string(&) = call("", &)
+  end
+
+  def self.reindent(src, depth, indent_chars)
+    lines = src.lines
+    lines.shift if lines.first == "\n"
+
+    indented_lines =
+      if lines.first =~ /^\S/
+        lines.drop(1)
+      else
+        lines.dup
+      end
+
+    min_indent = indented_lines.grep(/\S/).map { _1.match(/^[ \t]*/)[0].size }.min || 0
+
+    lines = lines.map { _1.sub(/^[ \t]{0,#{min_indent}}/, indent_chars * depth) }
+    lines.join
   end
 
   def self.interpolate(template, placeholders, args, options)
