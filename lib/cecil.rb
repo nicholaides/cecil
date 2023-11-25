@@ -5,14 +5,14 @@ module Cecil
     attr_accessor :parent, :children
 
     def initialize(parent:)
-      self.parent = parent
+      @parent = parent
+      @children = []
     end
 
     def root = parent.root
     def depth = parent.depth + 1
 
     def add_child(child)
-      self.children ||= []
       children << child
       child
     end
@@ -23,6 +23,14 @@ module Cecil
     end
 
     def stringify(config) = children.map { _1.stringify(config) }.join
+
+    def replace_child(old_node, new_node)
+      if idx = children.index(old_node)
+        children[idx] = new_node
+      else
+        children.each { _1.replace_child(old_node, new_node) }
+      end
+    end
   end
 
   class DeferredNode < AbstractNode
@@ -106,6 +114,7 @@ module Cecil
     end
 
     def current_node = @nodes.last || raise("No code node running yet")
+    def replace_node(...) = current_node.replace_child(...)
 
     def with_node(code)
       @nodes.push code
@@ -140,43 +149,44 @@ module Cecil
     def content_for!(key) = root.content_for__place key, current_node
   end
 
-  class CodeNode < AbstractNode
-    def initialize(src:, parent:)
+  class InterpolatedNode < AbstractNode
+    def initialize(src:, parent:, placeholders:, args:, options:, &block)
       super(parent:)
 
-      @src = src
+      @src = placeholders.any? ? Cecil.interpolate(src, placeholders, args, options) : src
+
+      return unless block
+
+      self.children = [] # TODO: test this
+      root.with_node(self, &block)
     end
 
     def build_child(src:) = root.build_child(src:, parent: self)
 
-    def placeholders
-      @placeholders ||= @src
-                        .to_enum(:scan, root.builder.config.placeholder_re)
-                        .map { Regexp.last_match }
-                        .map { Cecil::Placeholder.new(_1) }
-    end
+    def stringify(config)
+      src = Cecil.reindent(@src, depth, config.indent_chars)
+      src += "\n" unless src.end_with?("\n")
+      srcs = [src]
 
-    # dx/node
-    def with(*args, **options, &block)
-      raise "Expects args or opts but not both" if args.any? && options.any?
+      srcs += children.map { _1.stringify(config) }
 
-      self.children = []
+      close = begin
+        stack = []
 
-      if placeholders.any?
-        @src = Cecil.interpolate(@src, placeholders, args, options)
-        @replaced = true
+        src = @src.strip
+
+        while src.size > 0 # rubocop:disable Style/ZeroLengthPredicate
+          opener, closer = config.block_ending_pairs.detect { |l, _r| src.end_with?(l) } || break
+          stack.push closer
+          src = src[0...-opener.size]
+        end
+
+        Cecil.reindent("#{stack.join.strip}\n", depth, config.indent_chars)
       end
+      srcs << close
 
-      root.with_node(self, &block) if block
-
-      self
+      srcs.join
     end
-
-    # dx/node
-    alias call with
-
-    # dx/node
-    alias [] with
 
     # dx/node
     def <<(item)
@@ -185,34 +195,41 @@ module Cecil
       in String then root.src(item)
       end
     end
+  end
+
+  class CodeNode < AbstractNode
+    def initialize(src:, parent:)
+      super(parent:)
+
+      @src = src
+
+      @placeholders ||= @src
+                        .to_enum(:scan, root.builder.config.placeholder_re)
+                        .map { Regexp.last_match }
+                        .map { Cecil::Placeholder.new(_1) }
+    end
+
+    # dx/node
+    def with(*args, **options, &)
+      raise "Expects args or opts but not both" if args.any? && options.any?
+
+      InterpolatedNode
+        .new(src: @src, parent:, placeholders: @placeholders, args:, options:, &)
+        .tap { root.builder.replace_node(self, _1) }
+    end
+
+    # dx/node
+    alias call with
+
+    # dx/node
+    alias [] with
 
     def stringify(config)
-      raise "Mismatch?" if placeholders.any? && !@replaced
+      raise "Mismatch?" if @placeholders.any?
 
       src = Cecil.reindent(@src, depth, config.indent_chars)
       src += "\n" unless src.end_with?("\n")
-      srcs = [src]
-
-      if children
-        srcs += children.map { _1.stringify(config) }
-
-        close = begin
-          stack = []
-
-          src = @src.strip
-
-          while src.size > 0 # rubocop:disable Style/ZeroLengthPredicate
-            opener, closer = config.block_ending_pairs.detect { |l, _r| src.end_with?(l) } || break
-            stack.push closer
-            src = src[0...-opener.size]
-          end
-
-          Cecil.reindent("#{stack.join.strip}\n", depth, config.indent_chars)
-        end
-        srcs << close
-      end
-
-      srcs.join
+      src
     end
   end
 
