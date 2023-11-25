@@ -63,8 +63,7 @@ module Cecil
     def root = self
     def depth = -1
 
-    def build_node(...) = @builder.build_node(...)
-    def src(...) = @builder.src(...)
+    def build_node(...) = builder.build_node(...)
 
     def build_child(src:, parent: self) = CodeNode.new(src:, parent:)
   end
@@ -179,7 +178,7 @@ module Cecil
     def <<(item)
       case item
       in CodeNode then nil
-      in String then root.src(item)
+      in String then builder.src(item)
       end
     end
   end
@@ -293,7 +292,6 @@ module Cecil
   module Code
     module_function
 
-    # dx/module
     def call(out = $DEFAULT_OUTPUT, &)
       config = Configuration.new
       builder = Builder.new(config)
@@ -306,7 +304,6 @@ module Cecil
         .then { out << _1 }
     end
 
-    # dx/module
     def generate_string(&) = call("", &)
   end
 
@@ -372,14 +369,11 @@ module Cecil
       extend helpers
     end
 
-    # def src, ``
     def src(...) = @builder.src(...)
     alias :` :src
 
-    # def defer
     def defer(...) = @builder.defer(...)
 
-    # def content_for, def content_for?, content_for!
     def content_for(...) = @builder.content_for(...)
     def content_for?(...) = @builder.content_for?(...)
     def content_for!(...) = @builder.content_for!(...)
