@@ -13,10 +13,7 @@ module Cecil
     def root = parent.root
     def depth = parent.depth + 1
 
-    def add_child(child)
-      children << child
-      child
-    end
+    def add_child(child) = children << child
 
     def evaluate!
       children&.map!(&:evaluate!)
@@ -114,7 +111,10 @@ module Cecil
 
     def defer(&) = add_node DeferredNode.new(parent: current_node, &)
 
-    def add_node(child) = current_node.add_child child
+    def add_node(child)
+      current_node.add_child(child)
+      child
+    end
 
     def content_for(key, &content_block)
       if content_block
