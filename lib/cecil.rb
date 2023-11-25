@@ -9,6 +9,7 @@ module Cecil
       @children = []
     end
 
+    def builder = root.builder
     def root = parent.root
     def depth = parent.depth + 1
 
@@ -57,34 +58,20 @@ module Cecil
       super(parent: nil)
 
       @builder = builder
-      @content_for = Hash.new { |hash, key| hash[key] = [] }
     end
 
     def root = self
     def depth = -1
 
-    def with(&)
-      @builder.with_node(self, &)
-      self
-    end
-
-    def with_node(...) = @builder.with_node(...)
+    def build_node(...) = @builder.build_node(...)
     def src(...) = @builder.src(...)
 
     def build_child(src:, parent: self) = CodeNode.new(src:, parent:)
-
-    def content_for?(key) = @content_for.key?(key)
-
-    def content_for__add(key, child_container) = @content_for[key] << child_container
-
-    def content_for__place(key, new_parent)
-      @content_for.fetch(key).each { _1.place_content new_parent }
-    end
   end
 
   class ContainerNode < AbstractNode
     def with(&)
-      root.with_node(self, &)
+      root.build_node(self, &)
       self
     end
 
@@ -111,30 +98,28 @@ module Cecil
       @config = config
       @root = RootNode.new(self)
       @nodes = [@root]
+      @content_for = Hash.new { |hash, key| hash[key] = [] }
     end
 
     def current_node = @nodes.last || raise("No code node running yet")
     def replace_node(...) = current_node.replace_child(...)
 
-    def with_node(code)
+    def build_node(code)
       @nodes.push code
       yield
     ensure
       @nodes.pop
     end
 
-    # dx/block
     def src(src) = add_node current_node.build_child(src:)
 
-    # dx/block
     def defer(&) = add_node DeferredNode.new(parent: current_node, &)
 
     def add_node(child) = current_node.add_child child
 
-    # dx/block
     def content_for(key, &content_block)
       if content_block
-        root.content_for__add key, ContentForNode.new(parent: current_node).with(&content_block)
+        content_for__add key, ContentForNode.new(parent: current_node).with(&content_block)
       elsif content_for?(key)
         content_for!(key)
       else
@@ -142,11 +127,13 @@ module Cecil
       end
     end
 
-    # dx/block
-    def content_for?(key) = root.content_for?(key)
+    def content_for?(key) = @content_for.key?(key)
 
-    # dx/block
-    def content_for!(key) = root.content_for__place key, current_node
+    def content_for__add(key, child_container) = @content_for[key] << child_container
+
+    def content_for!(key)
+      @content_for.fetch(key).each { _1.place_content current_node }
+    end
   end
 
   class InterpolatedNode < AbstractNode
@@ -158,7 +145,7 @@ module Cecil
       return unless block
 
       self.children = [] # TODO: test this
-      root.with_node(self, &block)
+      root.build_node(self, &block)
     end
 
     def build_child(src:) = root.build_child(src:, parent: self)
@@ -204,7 +191,7 @@ module Cecil
       @src = src
 
       @placeholders ||= @src
-                        .to_enum(:scan, root.builder.config.placeholder_re)
+                        .to_enum(:scan, builder.config.placeholder_re)
                         .map { Regexp.last_match }
                         .map { Cecil::Placeholder.new(_1) }
     end
@@ -215,7 +202,7 @@ module Cecil
 
       InterpolatedNode
         .new(src: @src, parent:, placeholders: @placeholders, args:, options:, &)
-        .tap { root.builder.replace_node(self, _1) }
+        .tap { builder.replace_node(self, _1) }
     end
 
     # dx/node
