@@ -289,11 +289,9 @@ module Cecil
     end
   end
 
-  module Code
-    module_function
-
-    def call(out = $DEFAULT_OUTPUT, &)
-      config = Configuration.new
+  class Code < Configuration
+    def self.call(out = $DEFAULT_OUTPUT, &)
+      config = new
       builder = Builder.new(config)
       BlockContext.new(builder, config.helpers).instance_exec(&)
       builder
@@ -304,7 +302,7 @@ module Cecil
         .then { out << _1 }
     end
 
-    def generate_string(&) = call("", &)
+    def self.generate_string(&) = call("", &)
   end
 
   def self.reindent(src, depth, indent_chars)
