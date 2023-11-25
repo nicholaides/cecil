@@ -145,14 +145,16 @@ module Cecil
       super(parent:)
 
       @src = src
-
-      @placeholders = src
-                      .to_enum(:scan, placeholder_re(root.builder.config))
-                      .map { Regexp.last_match }
-                      .map { Cecil::CodeNode::Placeholder.new(_1) }
     end
 
     def build_child(src:) = root.build_child(src:, parent: self)
+
+    def placeholders
+      @placeholders ||= @src
+                        .to_enum(:scan, root.builder.config.placeholder_re)
+                        .map { Regexp.last_match }
+                        .map { Cecil::Placeholder.new(_1) }
+    end
 
     # dx/node
     def with(*args, **options, &block)
@@ -160,8 +162,8 @@ module Cecil
 
       self.children = []
 
-      if @placeholders.any?
-        @src = Cecil.interpolate(@src, @placeholders, args, options)
+      if placeholders.any?
+        @src = Cecil.interpolate(@src, placeholders, args, options)
         @replaced = true
       end
 
@@ -176,33 +178,6 @@ module Cecil
     # dx/node
     alias [] with
 
-    def stringify(config)
-      raise "Mismatch?" if @placeholders.any? && !@replaced
-
-      srcs = [reformat(config)]
-
-      if children
-        srcs += children.map { _1.stringify(config) }
-        srcs << close(config)
-      end
-
-      srcs.join
-    end
-
-    def close(config)
-      stack = []
-
-      src = @src.strip
-
-      while src.size > 0 # rubocop:disable Style/ZeroLengthPredicate
-        opener, closer = config.block_ending_pairs.detect { |l, _r| src.end_with?(l) } || break
-        stack.push closer
-        src = src[0...-opener.size]
-      end
-
-      Cecil.reindent("#{stack.join.strip}\n", depth, config.indent_chars)
-    end
-
     # dx/node
     def <<(item)
       case item
@@ -211,42 +186,45 @@ module Cecil
       end
     end
 
-    def placeholder_re(config)
-      /
-        #{config.placeholder_start}
-        #{
-          Regexp.union(
-            config.placeholder_delimiting_pairs.map do |pstart, pend|
-              /
-                #{Regexp.quote pstart}
-                (?<placeholder>
-                  #{config.placeholder_ident_re}
-                )
-                #{Regexp.quote pend}
-              /x
-            end
-          )
-        }
-      /x
-    end
+    def stringify(config)
+      raise "Mismatch?" if placeholders.any? && !@replaced
 
-    class Placeholder
-      attr_reader :ident, :offset_start, :offset_end
+      src = Cecil.reindent(@src, depth, config.indent_chars)
+      src += "\n" unless src.end_with?("\n")
+      srcs = [src]
 
-      def initialize(match)
-        @ident = match[:placeholder]
-        @offset_start, @offset_end = match.offset(0)
+      if children
+        srcs += children.map { _1.stringify(config) }
+
+        close = begin
+          stack = []
+
+          src = @src.strip
+
+          while src.size > 0 # rubocop:disable Style/ZeroLengthPredicate
+            opener, closer = config.block_ending_pairs.detect { |l, _r| src.end_with?(l) } || break
+            stack.push closer
+            src = src[0...-opener.size]
+          end
+
+          Cecil.reindent("#{stack.join.strip}\n", depth, config.indent_chars)
+        end
+        srcs << close
       end
 
-      def range = offset_start...offset_end
+      srcs.join
+    end
+  end
+
+  class Placeholder
+    attr_reader :ident, :offset_start, :offset_end
+
+    def initialize(match)
+      @ident = match[:placeholder]
+      @offset_start, @offset_end = match.offset(0)
     end
 
-    def reformat(config)
-      src = Cecil.reindent(@src, depth, config.indent_chars)
-
-      src += "\n" unless src.end_with?("\n")
-      src
-    end
+    def range = offset_start...offset_end
   end
 
   class Configuration
@@ -287,6 +265,25 @@ module Cecil
     def placeholder_ident_re = /[[:alnum:]_]+/
 
     def placeholder_start = /\$/
+
+    def placeholder_re
+      /
+        #{placeholder_start}
+        #{
+          Regexp.union(
+            placeholder_delimiting_pairs.map do |pstart, pend|
+              /
+                #{Regexp.quote pstart}
+                (?<placeholder>
+                  #{placeholder_ident_re}
+                )
+                #{Regexp.quote pend}
+              /x
+            end
+          )
+        }
+      /x
+    end
   end
 
   module Code
