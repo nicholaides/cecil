@@ -41,10 +41,10 @@ module Cecil
   end
 
   class RootNode < AbstractNode
-    def initialize(klass)
+    def initialize(builder)
       super(parent: nil)
 
-      @klass = klass
+      @builder = builder
       @content_for = Hash.new { |hash, key| hash[key] = [] }
     end
 
@@ -52,13 +52,13 @@ module Cecil
     def depth = -1
 
     def with(&)
-      @klass.with_node(self, &)
+      @builder.with_node(self, &)
       self
     end
 
-    def with_node(node, &) = @klass.with_node(node, &)
+    def with_node(node, &) = @builder.with_node(node, &)
 
-    def build_child(src:, parent: self) = @klass.new(src:, parent:)
+    def build_child(src:, parent: self) = @builder.new(src:, parent:)
 
     def content_for?(key) = @content_for.key?(key)
 
@@ -67,6 +67,8 @@ module Cecil
     def content_for__place(key, new_parent)
       @content_for.fetch(key).each { _1.place_content new_parent }
     end
+
+    def src(...) = @builder.src(...)
   end
 
   class ContainerNode < AbstractNode
@@ -240,7 +242,7 @@ module Cecil
     def <<(item)
       case item
       in Code then nil
-      in String then self.class.src(item)
+      in String then root.src(item)
       end
     end
 

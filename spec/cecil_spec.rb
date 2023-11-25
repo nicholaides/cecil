@@ -375,6 +375,7 @@ RSpec.describe Cecil do
         end
       end
     end
+
     describe "reindenting multiline strings"
     describe "adding trailing newlines to multiline strings"
     describe "using heredocs"
@@ -515,6 +516,36 @@ RSpec.describe Cecil do
           class A {}
           class B {}
           class C {}
+        CODE
+      end
+    end
+
+    describe "Code#<<" do
+      it "can append Code to the generated code block" do
+        # TODO: should be "} -> call"
+        expect_code do
+          `func {`[] do
+            `do stuff`
+          end << ` -> call`
+        end.to eq <<~CODE
+          func {
+              do stuff
+          }
+          -> call
+        CODE
+      end
+
+      # TODO: should be "} -> call"
+      it "can append string to the generated code block" do
+        expect_code do
+          `func {`[] do
+            `do stuff`
+          end << " -> call"
+        end.to eq <<~CODE
+          func {
+              do stuff
+          }
+          -> call
         CODE
       end
     end
