@@ -90,7 +90,7 @@ module Cecil
       root.build_node(self, &)
     end
 
-    def build_child(src:) = root.build_child(src:, parent: self)
+    def build_child(**) = root.build_child(**, parent: self)
 
     def depth = parent.depth
   end
@@ -192,8 +192,6 @@ module Cecil
 
     def initialize(**, &)
       super(**)
-
-      self.children = [] # TODO: test this
       root.build_node(self, &)
     end
 
