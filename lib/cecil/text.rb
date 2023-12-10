@@ -67,5 +67,17 @@ module Cecil
         end
       end
     end
+
+    def closers(src, block_ending_pairs)
+      stack = []
+
+      while src.size > 0 # rubocop:disable Style/ZeroLengthPredicate
+        opener, closer = block_ending_pairs.detect { |l, _r| src.end_with?(l) } || break
+        stack.push closer
+        src = src[0...-opener.size]
+      end
+
+      stack
+    end
   end
 end

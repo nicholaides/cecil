@@ -128,7 +128,7 @@ module Cecil
     alias [] with
 
     def stringify_src(config)
-      src = Cecil::Text.reindent(@src, depth, config.indent_chars)
+      src = Text.reindent(@src, depth, config.indent_chars)
       src += "\n" unless src.end_with?("\n")
       src
     end
@@ -142,17 +142,10 @@ module Cecil
     include AsParentNode
 
     def closers(config)
-      stack = []
+      # TODO: test the @src.strip
+      closing_brackets = Text.closers(@src.strip, config.block_ending_pairs)
 
-      src = @src.strip
-
-      while src.size > 0 # rubocop:disable Style/ZeroLengthPredicate
-        opener, closer = config.block_ending_pairs.detect { |l, _r| src.end_with?(l) } || break
-        stack.push closer
-        src = src[0...-opener.size]
-      end
-
-      Cecil::Text.reindent("#{stack.join.strip}\n", depth, config.indent_chars)
+      Text.reindent("#{closing_brackets.join.strip}\n", depth, config.indent_chars)
     end
 
     def stringify(...)
@@ -198,7 +191,7 @@ module Cecil
 
       CodeLiteralNode
         .build(
-          src: Cecil::Text.interpolate(@src, @placeholders, args, options),
+          src: Text.interpolate(@src, @placeholders, args, options),
           parent:,
           &
         )
