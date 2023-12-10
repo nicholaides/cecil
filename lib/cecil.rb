@@ -42,12 +42,12 @@ module Cecil
 
     def initialize(config)
       @config = config
-      @root = RootNode.new(self)
+      @root = Nodes::RootNode.new(self)
       @active_nodes = [@root]
 
       @content_for = ContentFor.new do |on|
         on.store do |&block|
-          ContentForNode.new(parent: current_node, &block)
+          Nodes::ContentForNode.new(parent: current_node, &block)
         end
 
         on.place do |node|
@@ -55,7 +55,7 @@ module Cecil
         end
 
         on.defer do |&block|
-          current_node.add_child DeferredNode.new(parent: current_node, &block)
+          current_node.add_child Nodes::DeferredNode.new(parent: current_node, &block)
         end
       end
     end
@@ -72,7 +72,7 @@ module Cecil
 
     def src(src) = add_node current_node.build_child(src:)
 
-    def defer(&) = add_node DeferredNode.new(parent: current_node, &)
+    def defer(&) = add_node Nodes::DeferredNode.new(parent: current_node, &)
 
     def add_node(child)
       current_node.add_child child
