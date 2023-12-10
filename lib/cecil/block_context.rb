@@ -1,3 +1,5 @@
+require "forwardable"
+
 module Cecil
   # TODO: test that it can access methods (and therefore should not inherit from BasicObject)
   # TODO: test that helpers works
@@ -7,13 +9,9 @@ module Cecil
       extend helpers
     end
 
-    def src(...) = @builder.src(...)
+    extend Forwardable
+    def_delegators :@builder, :src, :defer, :content_for, :content_for!, :content_for?
+
     alias :` :src
-
-    def defer(...) = @builder.defer(...)
-
-    def content_for(...) = @builder.content_for(...)
-    def content_for?(...) = @builder.content_for?(...)
-    def content_for!(...) = @builder.content_for!(...)
   end
 end
