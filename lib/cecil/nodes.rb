@@ -96,7 +96,7 @@ module Cecil
       def depth = parent.depth
     end
 
-    class ContentForNode < ContainerNode
+    class DetachedNode < ContainerNode
       attr_accessor :root
 
       def initialize(root, &)
@@ -104,7 +104,7 @@ module Cecil
         super(parent: nil, &)
       end
 
-      def move_to_parent(new_parent)
+      def attach_to(new_parent)
         self.parent = new_parent
         new_parent.add_child self
       end

@@ -16,14 +16,14 @@ module Cecil
       @active_nodes = [@root]
 
       @content_for = ContentFor.new(
-        store: method(:unattached_node),
+        store: method(:detached_node),
         place: method(:reattach_node),
         defer: method(:defer)
       )
     end
 
-    def unattached_node(&) = Nodes::ContentForNode.new(root, &)
-    def reattach_node(detacched_node) = detacched_node.move_to_parent current_node
+    def detached_node(&) = Nodes::DetachedNode.new(root, &)
+    def reattach_node(detacched_node) = detacched_node.attach_to current_node
 
     def current_node = @active_nodes.last || raise("No active Cecil node...")
     def replace_node(...) = current_node.replace_child(...)
