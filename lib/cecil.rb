@@ -1,26 +1,24 @@
 require_relative "cecil/version"
 
 module Cecil
-  class AbstractNode
-    attr_accessor :parent, :children
-
-    def initialize(parent:)
-      @parent = parent
+  module AsParentNode
+    def initialize(...)
+      super
       @children = []
     end
 
-    def builder = root.builder
-    def root = parent.root
-    def depth = parent.depth + 1
+    def children = @children
+
+    def children=(children)
+      @children = children
+    end
 
     def add_child(child) = children << child
 
     def evaluate!
       children&.map!(&:evaluate!)
-      self
+      super
     end
-
-    def stringify(config) = children.map { _1.stringify(config) }.join
 
     def replace_child(old_node, new_node)
       if idx = children.index(old_node)
@@ -29,11 +27,34 @@ module Cecil
         children.each { _1.replace_child(old_node, new_node) }
       end
     end
+
+    def stringify_children(...) = children.map { _1.stringify(...) }
+
+    def stringify(...) = stringify_children(...).join
+  end
+
+  class AbstractNode
+    attr_accessor :parent
+
+    def initialize(parent:)
+      self.parent = parent
+    end
+
+    def builder = root.builder
+    def root = parent.root
+    def depth = parent.depth + 1
+
+    def evaluate! = self
+
+    # TODO: we do need this, right? the tests don't seem to think so
+    def replace_child(...) = nil
   end
 
   class DeferredNode < AbstractNode
-    def initialize(parent:, &deferred_block)
-      super(parent:)
+    include AsParentNode
+
+    def initialize(**, &deferred_block)
+      super(**)
       @deferred_block = deferred_block
       add_child ContainerNode.new(parent: self)
     end
@@ -49,6 +70,8 @@ module Cecil
   end
 
   class RootNode < AbstractNode
+    include AsParentNode
+
     attr_accessor :builder
 
     def initialize(builder)
@@ -66,6 +89,8 @@ module Cecil
   end
 
   class ContainerNode < AbstractNode
+    include AsParentNode
+
     def insert(&)
       root.build_node(self, &)
       self
@@ -112,7 +137,7 @@ module Cecil
     def defer(&) = add_node DeferredNode.new(parent: current_node, &)
 
     def add_node(child)
-      current_node.add_child(child)
+      current_node.add_child child
       child
     end
 
@@ -136,16 +161,13 @@ module Cecil
   end
 
   class CodeLiteralNode < AbstractNode
-    def self.build(src:, parent:, &block)
-      if block
-        CodeLiteralWithChildrenNode.new(src:, parent:, &block)
-      else
-        new(src:, parent:)
-      end
+    def self.build(...)
+      klass = block_given? ? CodeLiteralWithChildrenNode : self
+      klass.new(...)
     end
 
-    def initialize(src:, parent:)
-      super(parent:)
+    def initialize(src:, **)
+      super(**)
       @src = src
     end
 
@@ -160,46 +182,49 @@ module Cecil
     alias call with
     alias [] with
 
-    def stringify(config)
+    def stringify_src(config)
       src = Cecil.reindent(@src, depth, config.indent_chars)
       src += "\n" unless src.end_with?("\n")
       src
     end
 
+    def stringify(...)= stringify_src(...)
+
     # TODO: do we need to define #<< ?
   end
 
   class CodeLiteralWithChildrenNode < CodeLiteralNode
-    def initialize(src:, parent:, &block)
-      super(src:, parent:)
+    include AsParentNode
+
+    def initialize(**, &)
+      super(**)
 
       self.children = [] # TODO: test this
-      root.build_node(self, &block)
+      root.build_node(self, &)
     end
 
-    def build_child(src:) = root.build_child(src:, parent: self)
+    def build_child(**) = root.build_child(**, parent: self)
 
-    def stringify(config)
-      srcs = [super]
+    def closers(config)
+      stack = []
 
-      srcs += children.map { _1.stringify(config) }
+      src = @src.strip
 
-      close = begin
-        stack = []
-
-        src = @src.strip
-
-        while src.size > 0 # rubocop:disable Style/ZeroLengthPredicate
-          opener, closer = config.block_ending_pairs.detect { |l, _r| src.end_with?(l) } || break
-          stack.push closer
-          src = src[0...-opener.size]
-        end
-
-        Cecil.reindent("#{stack.join.strip}\n", depth, config.indent_chars)
+      while src.size > 0 # rubocop:disable Style/ZeroLengthPredicate
+        opener, closer = config.block_ending_pairs.detect { |l, _r| src.end_with?(l) } || break
+        stack.push closer
+        src = src[0...-opener.size]
       end
-      srcs << close
 
-      srcs.join
+      Cecil.reindent("#{stack.join.strip}\n", depth, config.indent_chars)
+    end
+
+    def stringify(...)
+      [
+        stringify_src(...),
+        *stringify_children(...),
+        *closers(...)
+      ].join
     end
 
     # dx/node
@@ -212,21 +237,21 @@ module Cecil
   end
 
   class TemplateNode < AbstractNode
-    def self.build(src:, parent:, builder:)
+    def self.build(src:, builder:, **)
       placeholders ||= src
                        .to_enum(:scan, builder.config.placeholder_re)
                        .map { Regexp.last_match }
                        .map { Cecil::Placeholder.new(_1) }
 
       if placeholders.any?
-        new(src:, parent:, placeholders:)
+        new(src:, placeholders:, **)
       else
-        CodeLiteralNode.new(src:, parent:)
+        CodeLiteralNode.new(src:, **)
       end
     end
 
-    def initialize(src:, parent:, placeholders:)
-      super(parent:)
+    def initialize(src:, placeholders:, **)
+      super(**)
       @src = src
       @placeholders = placeholders
     end
