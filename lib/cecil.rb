@@ -1,15 +1,63 @@
 require_relative "cecil/version"
 require_relative "cecil/nodes"
 
+require "forwardable"
+
 module Cecil
+  class ContentFor
+    def initialize(store: nil, place: nil, defer: nil)
+      @store = store
+      @place = place
+      @defer = defer
+
+      yield self
+
+      @content = Hash.new { |hash, key| hash[key] = [] }
+    end
+
+    def store(&block) = @store = block
+    def place(&block) = @place = block
+    def defer(&block) = @defer = block
+
+    def content_for(key, &)
+      if block_given?
+        @content[key] << @store.call(&)
+      elsif content_for?(key)
+        content_for!(key)
+      else
+        @defer.call { content_for!(key) }
+      end
+    end
+
+    def content_for?(key) = @content.key?(key)
+
+    def content_for!(key) = @content.fetch(key).each(&@place)
+  end
+
   class Builder
     attr_accessor :root, :config
+
+    extend Forwardable
+    def_delegators :@content_for, :content_for, :content_for!, :content_for?
 
     def initialize(config)
       @config = config
       @root = RootNode.new(self)
       @active_nodes = [@root]
-      @content_for = Hash.new { |hash, key| hash[key] = [] }
+
+      @content_for = ContentFor.new do |on|
+        on.store do |&block|
+          ContentForNode.new(parent: current_node, &block)
+        end
+
+        on.place do |node|
+          node.place_content current_node
+        end
+
+        on.defer do |&block|
+          current_node.add_child DeferredNode.new(parent: current_node, &block)
+        end
+      end
     end
 
     def current_node = @active_nodes.last || raise("No active Cecil node...")
@@ -29,24 +77,6 @@ module Cecil
     def add_node(child)
       current_node.add_child child
       child
-    end
-
-    def content_for(key, &)
-      if block_given?
-        content_for__add key, ContentForNode.new(parent: current_node, &)
-      elsif content_for?(key)
-        content_for!(key)
-      else
-        current_node.add_child DeferredNode.new(parent: current_node) { content_for!(key) }
-      end
-    end
-
-    def content_for?(key) = @content_for.key?(key)
-
-    def content_for__add(key, child_container) = @content_for[key] << child_container
-
-    def content_for!(key)
-      @content_for.fetch(key).each { _1.place_content current_node }
     end
   end
 
