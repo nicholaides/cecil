@@ -68,16 +68,14 @@ module Cecil
       end
     end
 
-    def closers(src, block_ending_pairs)
-      stack = []
-
-      while src.size > 0 # rubocop:disable Style/ZeroLengthPredicate
-        opener, closer = block_ending_pairs.detect { |l, _r| src.end_with?(l) } || break
-        stack.push closer
+    def each_closer(src, block_ending_pairs)
+      while !src.empty? && match = block_ending_pairs.detect { |l, _r| src.end_with?(l) }
+        match => [opener, closer]
+        yield closer
         src = src[0...-opener.size]
       end
-
-      stack
     end
+
+    def closers(...) = block_given? ? each_closer(...) : enum_for(:each_closer, ...) # rubocop:disable Lint/ToEnumArguments
   end
 end

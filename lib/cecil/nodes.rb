@@ -143,7 +143,7 @@ module Cecil
 
     def closers(config)
       # TODO: test the @src.strip
-      closing_brackets = Text.closers(@src.strip, config.block_ending_pairs)
+      closing_brackets = Text.closers(@src.strip, config.block_ending_pairs).to_a
 
       Text.reindent("#{closing_brackets.join.strip}\n", depth, config.indent_chars)
     end
