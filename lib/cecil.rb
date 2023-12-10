@@ -2,10 +2,16 @@ require_relative "cecil/version"
 
 module Cecil
   module AsParentNode
-    def initialize(...)
-      super
+    def initialize(**, &)
+      super(**)
+
       @children = []
+      add_to_root(&)
     end
+
+    def add_to_root(&) = root.build_node(self, &)
+
+    def build_child(**) = root.build_child(**, parent: self)
 
     def children = @children
 
@@ -69,13 +75,15 @@ module Cecil
     attr_accessor :builder
 
     def initialize(builder)
-      super(parent: nil)
-
       @builder = builder
+
+      super(parent: nil)
     end
 
     def root = self
     def depth = -1
+
+    def add_to_root(...) = nil
 
     def build_node(...) = builder.build_node(...)
 
@@ -84,13 +92,6 @@ module Cecil
 
   class ContainerNode < AbstractNode
     include AsParentNode
-
-    def initialize(**, &)
-      super(**)
-      root.build_node(self, &)
-    end
-
-    def build_child(**) = root.build_child(**, parent: self)
 
     def depth = parent.depth
   end
@@ -189,13 +190,6 @@ module Cecil
 
   class CodeLiteralWithChildrenNode < CodeLiteralNode
     include AsParentNode
-
-    def initialize(**, &)
-      super(**)
-      root.build_node(self, &)
-    end
-
-    def build_child(**) = root.build_child(**, parent: self)
 
     def closers(config)
       stack = []
