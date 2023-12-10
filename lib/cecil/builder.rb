@@ -5,13 +5,13 @@ require "forwardable"
 
 module Cecil
   class Builder
-    attr_accessor :root, :config
+    attr_accessor :root, :syntax
 
     extend Forwardable
     def_delegators :@content_for, :content_for, :content_for!, :content_for?
 
-    def initialize(config)
-      @config = config
+    def initialize(syntax)
+      @syntax = syntax
       @root = Nodes::RootNode.new(self)
       @active_nodes = [@root]
 

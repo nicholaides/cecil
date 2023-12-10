@@ -6,13 +6,13 @@ require_relative "cecil/syntax"
 module Cecil
   class Code < Syntax
     def self.call(out = $DEFAULT_OUTPUT, &)
-      config = new
-      builder = Builder.new(config)
-      BlockContext.new(builder, config.helpers).instance_exec(&)
+      syntax = new
+      builder = Builder.new(syntax)
+      BlockContext.new(builder, syntax.helpers).instance_exec(&)
       builder
         .root
         .evaluate!
-        .stringify(config)
+        .stringify(syntax)
         .lstrip
         .then { out << _1 }
     end

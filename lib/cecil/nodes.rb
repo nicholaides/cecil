@@ -129,8 +129,8 @@ module Cecil
       alias call with
       alias [] with
 
-      def stringify_src(config)
-        src = Text.reindent(@src, depth, config.indent_chars)
+      def stringify_src(syntax)
+        src = Text.reindent(@src, depth, syntax.indent_chars)
         src += "\n" unless src.end_with?("\n")
         src
       end
@@ -143,11 +143,11 @@ module Cecil
     class CodeLiteralWithChildrenNode < CodeLiteralNode
       include AsParentNode
 
-      def closers(config)
+      def closers(syntax)
         # TODO: test the @src.strip
-        closing_brackets = Text.closers(@src.strip, config.block_ending_pairs).to_a
+        closing_brackets = Text.closers(@src.strip, syntax.block_ending_pairs).to_a
 
-        Text.reindent("#{closing_brackets.join.strip}\n", depth, config.indent_chars)
+        Text.reindent("#{closing_brackets.join.strip}\n", depth, syntax.indent_chars)
       end
 
       def stringify(...)
@@ -169,7 +169,7 @@ module Cecil
 
     class TemplateNode < AbstractNode
       def self.build(src:, builder:, **)
-        placeholders = builder.config.scan_for_placeholders(src)
+        placeholders = builder.syntax.scan_for_placeholders(src)
 
         if placeholders.any?
           new(src:, placeholders:, **)
