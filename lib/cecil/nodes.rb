@@ -1,3 +1,5 @@
+require_relative "text"
+
 module Cecil
   module AsParentNode
     def self.included(base)
