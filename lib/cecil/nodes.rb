@@ -128,7 +128,7 @@ module Cecil
     alias [] with
 
     def stringify_src(config)
-      src = Cecil.reindent(@src, depth, config.indent_chars)
+      src = Cecil::Text.reindent(@src, depth, config.indent_chars)
       src += "\n" unless src.end_with?("\n")
       src
     end
@@ -152,7 +152,7 @@ module Cecil
         src = src[0...-opener.size]
       end
 
-      Cecil.reindent("#{stack.join.strip}\n", depth, config.indent_chars)
+      Cecil::Text.reindent("#{stack.join.strip}\n", depth, config.indent_chars)
     end
 
     def stringify(...)
@@ -198,7 +198,7 @@ module Cecil
 
       CodeLiteralNode
         .build(
-          src: Cecil.interpolate(@src, @placeholders, args, options),
+          src: Cecil::Text.interpolate(@src, @placeholders, args, options),
           parent:,
           &
         )
