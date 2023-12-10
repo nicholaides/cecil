@@ -1,7 +1,7 @@
 require_relative "../cecil"
+require "json"
 
 module Cecil
-  require "json"
   class TypeScript < Code
     def indent_chars = "  "
 

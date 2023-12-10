@@ -1,3 +1,4 @@
+require_relative "content_for"
 require_relative "text"
 
 module Cecil

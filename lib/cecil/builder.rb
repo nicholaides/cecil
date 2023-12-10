@@ -1,3 +1,6 @@
+require_relative "content_for"
+require_relative "nodes"
+
 require "forwardable"
 
 module Cecil
