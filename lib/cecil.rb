@@ -62,7 +62,7 @@ module Cecil
 
     def build_node(...) = builder.build_node(...)
 
-    def build_child(src:, parent: self) = CodeNode.new(src:, parent:)
+    def build_child(src:, parent: self) = TemplateNode.build(src:, parent:, builder:)
   end
 
   class ContainerNode < AbstractNode
@@ -135,13 +135,41 @@ module Cecil
     end
   end
 
-  class InterpolatedNode < AbstractNode
-    def initialize(src:, parent:, placeholders:, args:, options:, &block)
+  class CodeLiteralNode < AbstractNode
+    def self.build(src:, parent:, &block)
+      if block
+        CodeLiteralWithChildrenNode.new(src:, parent:, &block)
+      else
+        new(src:, parent:)
+      end
+    end
+
+    def initialize(src:, parent:)
       super(parent:)
+      @src = src
+    end
 
-      @src = placeholders.any? ? Cecil.interpolate(src, placeholders, args, options) : src
+    def with(*args, **options, &)
+      raise "Has no placeholders" if args.any? || options.any?
 
-      return unless block
+      self.class.build(src: @src, parent:, &)
+          .tap { builder.replace_node self, _1 }
+    end
+
+    # dx/node
+    alias call with
+    alias [] with
+
+    def stringify(config)
+      src = Cecil.reindent(@src, depth, config.indent_chars)
+      src += "\n" unless src.end_with?("\n")
+      src
+    end
+  end
+
+  class CodeLiteralWithChildrenNode < CodeLiteralNode
+    def initialize(src:, parent:, &block)
+      super(src:, parent:)
 
       self.children = [] # TODO: test this
       root.build_node(self, &block)
@@ -150,9 +178,7 @@ module Cecil
     def build_child(src:) = root.build_child(src:, parent: self)
 
     def stringify(config)
-      src = Cecil.reindent(@src, depth, config.indent_chars)
-      src += "\n" unless src.end_with?("\n")
-      srcs = [src]
+      srcs = [super]
 
       srcs += children.map { _1.stringify(config) }
 
@@ -177,46 +203,51 @@ module Cecil
     # dx/node
     def <<(item)
       case item
-      in CodeNode then nil
+      in CodeLiteralNode | TemplateNode then nil # TODO: test this... where should << be defined?
       in String then builder.src(item)
       end
     end
   end
 
-  class CodeNode < AbstractNode
-    def initialize(src:, parent:)
+  class TemplateNode < AbstractNode
+    def self.build(src:, parent:, builder:)
+      placeholders ||= src
+                       .to_enum(:scan, builder.config.placeholder_re)
+                       .map { Regexp.last_match }
+                       .map { Cecil::Placeholder.new(_1) }
+
+      if placeholders.any?
+        new(src:, parent:, placeholders:)
+      else
+        CodeLiteralNode.new(src:, parent:)
+      end
+    end
+
+    def initialize(src:, parent:, placeholders:)
       super(parent:)
-
       @src = src
-
-      @placeholders ||= @src
-                        .to_enum(:scan, builder.config.placeholder_re)
-                        .map { Regexp.last_match }
-                        .map { Cecil::Placeholder.new(_1) }
+      @placeholders = placeholders
     end
 
     # dx/node
     def with(*args, **options, &)
       raise "Expects args or opts but not both" if args.any? && options.any?
 
-      InterpolatedNode
-        .new(src: @src, parent:, placeholders: @placeholders, args:, options:, &)
-        .tap { builder.replace_node(self, _1) }
+      CodeLiteralNode
+        .build(
+          src: Cecil.interpolate(@src, @placeholders, args, options),
+          parent:,
+          &
+        )
+        .tap { builder.replace_node self, _1 }
     end
 
     # dx/node
     alias call with
-
-    # dx/node
     alias [] with
 
-    def stringify(config)
-      raise "Mismatch?" if @placeholders.any?
-
-      src = Cecil.reindent(@src, depth, config.indent_chars)
-      src += "\n" unless src.end_with?("\n")
-      src
-    end
+    # has placeholders but .with was never called
+    def stringify(*) = raise "Mismatch?"
   end
 
   class Placeholder
@@ -316,15 +347,16 @@ module Cecil
         lines.dup
       end
 
-    min_indent = indented_lines.grep(/\S/).map { _1.match(/^[ \t]*/)[0].size }.min || 0
+    min_indent = indented_lines
+                 .grep(/\S/)
+                 .map { _1.match(/^[ \t]*/)[0].size }
+                 .min || 0
 
     lines = lines.map { _1.sub(/^[ \t]{0,#{min_indent}}/, indent_chars * depth) }
     lines.join
   end
 
   def self.interpolate(template, placeholders, args, options)
-    return unless template
-
     match_idents = placeholders.to_set(&:ident)
 
     subs = [args, options]
