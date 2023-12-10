@@ -2,22 +2,20 @@ require_relative "cecil/version"
 
 module Cecil
   module AsParentNode
+    def self.included(base)
+      base.attr_accessor :children
+    end
+
     def initialize(**, &)
       super(**)
 
-      @children = []
+      self.children = []
       add_to_root(&)
     end
 
     def add_to_root(&) = root.build_node(self, &)
 
     def build_child(**) = root.build_child(**, parent: self)
-
-    def children = @children
-
-    def children=(children)
-      @children = children
-    end
 
     def add_child(child) = children << child
 
