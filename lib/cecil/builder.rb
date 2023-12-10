@@ -17,11 +17,11 @@ module Cecil
 
       @content_for = ContentFor.new do |on|
         on.store do |&block|
-          Nodes::ContentForNode.new(parent: current_node, &block)
+          unattached_node(&block)
         end
 
         on.place do |content_for_node|
-          content_for_node.place_content_in current_node
+          content_for_node.move_to_parent current_node
         end
 
         on.defer do |&block|
@@ -29,6 +29,8 @@ module Cecil
         end
       end
     end
+
+    def unattached_node(&) = Nodes::ContentForNode.new(root, &)
 
     def current_node = @active_nodes.last || raise("No active Cecil node...")
     def replace_node(...) = current_node.replace_child(...)

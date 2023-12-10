@@ -97,14 +97,17 @@ module Cecil
     end
 
     class ContentForNode < ContainerNode
-      attr_accessor :location_parent
+      attr_accessor :root
 
-      def place_content_in(new_parent)
-        self.location_parent = new_parent
-        new_parent.add_child self
+      def initialize(root, &)
+        @root = root
+        super(parent: nil, &)
       end
 
-      def depth = location_parent.depth
+      def move_to_parent(new_parent)
+        self.parent = new_parent
+        new_parent.add_child self
+      end
     end
 
     class CodeLiteralNode < AbstractNode
