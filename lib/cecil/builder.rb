@@ -20,12 +20,12 @@ module Cecil
           Nodes::ContentForNode.new(parent: current_node, &block)
         end
 
-        on.place do |node|
-          node.place_content current_node
+        on.place do |content_for_node|
+          content_for_node.place_content_in current_node
         end
 
         on.defer do |&block|
-          current_node.add_child Nodes::DeferredNode.new(parent: current_node, &block)
+          defer(&block)
         end
       end
     end

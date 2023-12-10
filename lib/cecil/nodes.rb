@@ -99,7 +99,7 @@ module Cecil
     class ContentForNode < ContainerNode
       attr_accessor :location_parent
 
-      def place_content(new_parent)
+      def place_content_in(new_parent)
         self.location_parent = new_parent
         new_parent.add_child self
       end
