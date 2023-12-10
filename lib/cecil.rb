@@ -51,22 +51,16 @@ module Cecil
   end
 
   class DeferredNode < AbstractNode
-    include AsParentNode
-
-    def initialize(**, &deferred_block)
+    def initialize(**, &)
       super(**)
-      @deferred_block = deferred_block
-      add_child ContainerNode.new(parent: self)
+
+      @evaluate = lambda do
+        ContainerNode.new(**, &)
+                     .tap { root.replace_child self, _1 }
+      end
     end
 
-    def child
-      children => [container]
-      container
-    end
-
-    def evaluate! = child.insert(&@deferred_block)
-
-    def depth = parent.depth
+    def evaluate!(...) = @evaluate.call(...)
   end
 
   class RootNode < AbstractNode
@@ -91,9 +85,9 @@ module Cecil
   class ContainerNode < AbstractNode
     include AsParentNode
 
-    def insert(&)
+    def initialize(**, &)
+      super(**)
       root.build_node(self, &)
-      self
     end
 
     def build_child(src:) = root.build_child(src:, parent: self)
@@ -141,9 +135,9 @@ module Cecil
       child
     end
 
-    def content_for(key, &content_block)
-      if content_block
-        content_for__add key, ContentForNode.new(parent: current_node).insert(&content_block)
+    def content_for(key, &)
+      if block_given?
+        content_for__add key, ContentForNode.new(parent: current_node, &)
       elsif content_for?(key)
         content_for!(key)
       else
