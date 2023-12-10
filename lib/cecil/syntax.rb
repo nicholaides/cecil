@@ -1,3 +1,5 @@
+require_relative "text"
+
 module Cecil
   class Syntax
     class << self
@@ -55,6 +57,13 @@ module Cecil
           )
         }
       /x
+    end
+
+    def scan_for_placeholders(src)
+      src
+        .to_enum(:scan, placeholder_re)
+        .map { Regexp.last_match }
+        .map { Cecil::Placeholder.new(_1) }
     end
   end
 end

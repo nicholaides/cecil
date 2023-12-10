@@ -15,7 +15,7 @@ module Cecil
         add_to_root(&)
       end
 
-      def add_to_root(&) = root.build_node(self, &)
+      def add_to_root(&) = builder.build_node(self, &)
 
       def build_child(**) = root.build_child(**, parent: self)
 
@@ -169,10 +169,7 @@ module Cecil
 
     class TemplateNode < AbstractNode
       def self.build(src:, builder:, **)
-        placeholders ||= src
-                         .to_enum(:scan, builder.config.placeholder_re)
-                         .map { Regexp.last_match }
-                         .map { Cecil::Placeholder.new(_1) }
+        placeholders = builder.config.scan_for_placeholders(src)
 
         if placeholders.any?
           new(src:, placeholders:, **)
