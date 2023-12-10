@@ -32,9 +32,9 @@ module Cecil
   end
 
   class DeferredNode < AbstractNode
-    def initialize(parent:, &block)
+    def initialize(parent:, &deferred_block)
       super(parent:)
-      @block = block
+      @deferred_block = deferred_block
       add_child ContainerNode.new(parent: self)
     end
 
@@ -43,7 +43,7 @@ module Cecil
       container
     end
 
-    def evaluate! = child.with(&@block)
+    def evaluate! = child.insert(&@deferred_block)
 
     def depth = parent.depth
   end
@@ -66,7 +66,7 @@ module Cecil
   end
 
   class ContainerNode < AbstractNode
-    def with(&)
+    def insert(&)
       root.build_node(self, &)
       self
     end
@@ -93,18 +93,18 @@ module Cecil
     def initialize(config)
       @config = config
       @root = RootNode.new(self)
-      @nodes = [@root]
+      @active_nodes = [@root]
       @content_for = Hash.new { |hash, key| hash[key] = [] }
     end
 
-    def current_node = @nodes.last || raise("No code node running yet")
+    def current_node = @active_nodes.last || raise("No active Cecil node...")
     def replace_node(...) = current_node.replace_child(...)
 
     def build_node(code)
-      @nodes.push code
+      @active_nodes.push code
       yield
     ensure
-      @nodes.pop
+      @active_nodes.pop
     end
 
     def src(src) = add_node current_node.build_child(src:)
@@ -118,7 +118,7 @@ module Cecil
 
     def content_for(key, &content_block)
       if content_block
-        content_for__add key, ContentForNode.new(parent: current_node).with(&content_block)
+        content_for__add key, ContentForNode.new(parent: current_node).insert(&content_block)
       elsif content_for?(key)
         content_for!(key)
       else
@@ -165,6 +165,8 @@ module Cecil
       src += "\n" unless src.end_with?("\n")
       src
     end
+
+    # TODO: do we need to define #<< ?
   end
 
   class CodeLiteralWithChildrenNode < CodeLiteralNode
@@ -203,7 +205,7 @@ module Cecil
     # dx/node
     def <<(item)
       case item
-      in CodeLiteralNode | TemplateNode then nil # TODO: test this... where should << be defined?
+      in CodeLiteralNode then nil # TODO: test this... where should << be defined?
       in String then builder.src(item)
       end
     end
