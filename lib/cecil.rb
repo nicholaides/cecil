@@ -5,7 +5,7 @@ require_relative "cecil/syntax"
 
 module Cecil
   class Code < Syntax
-    def self.call(out = $DEFAULT_OUTPUT, &)
+    def self.call(out = $stdout, &)
       syntax = new
       builder = Builder.new(syntax)
       BlockContext.new(builder, syntax.helpers).instance_exec(&)
