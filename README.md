@@ -1,24 +1,222 @@
 # Cecil
 
-TODO: Delete this and the text below, and describe your gem
+An experimental templating library for generating source code. Leverages Ruby's flexible syntax to maximize your template's fidelity to its output.
 
-Welcome to your new gem! In this directory, you'll find the files you need to be able to package up your Ruby library into a gem. Put your Ruby code in the file `lib/cecil`. To experiment with that code, run `bin/console` for an interactive prompt.
+## Features
+
+### Emit code with as little syntax as possible
+
+Inside Cecil's block, backticks emit source code (instead of their default behavior of running shell commands).
+
+You can use `#src` if you prefer to avoid backticks.
+
+```ruby
+Cecil::Code.generate_string do
+  `import Model from '../model'`
+
+  `class User extends Model {
+    id: number
+    name: string
+    companyId: number | undefined
+  }`
+
+  # use #src if you prefer to avoid backticks
+  src "export type Username = User['name']"
+end
+```
+
+<center>⬇ ⬇ produces ⬇ ⬇</center>
+
+```typescript
+import Model from '../model'
+class User extends Model {
+  id: number
+  name: string
+  companyId: number | undefined
+}
+export type Username = User['name']
+```
+
+### Interpolate with less visual noise & more fidelity to the intended result
+
+Use `#[]` on the backticks to interpolate values.
+
+Positional arguments match up with placeholders in order. Named arguments match placeholders by name.
+
+```ruby
+field = "user"
+types = ["string", "string[]"]
+default_value = ["SilentHaiku", "DriftingSnowfall"]
+field_class = "Model"
+
+Cecil::Code.generate_string do
+  # positional
+  `let $field: $FieldType = $default`[field, types.join('|'), default_value.sort.to_json]
+
+  ``
+
+  # named
+  `let $field: $FieldClass<$Types> | null = new $FieldClass($default)`[
+    field: field,
+    FieldClass: field_class,
+    Types: types.join('|'),
+    default: default_value.sort.to_json
+  ]
+end
+```
+
+<center>⬇ ⬇ produces ⬇ ⬇</center>
+
+```typescript
+let user: string|string[] = ["DriftingSnowfall","SilentHaiku"]
+
+let user: Model<string|string[]> | null = new Model(["DriftingSnowfall","SilentHaiku"])
+```
+
+### Indent code blocks, and close brackets automatically
+
+A block passed to `#[]` will be indented and will close any open brackets at the end of the ``` `` ```
+
+```ruby
+model = "User"
+fields_and_defaults = {
+  name: "Unnamed",
+  age: 0,
+}
+
+Cecil::Code.generate_string do
+  # open brackets are closed automatically
+  `class $Class extends Model {`[model] do
+    `id: number`
+
+    fields_and_defaults.each do |field, default_value|
+      `override get $field() {`[field] do
+        `return super.$field ?? $defaultValue`[field, default_value]
+      end
+    end
+  end
+end
+```
+
+<center>⬇ ⬇ produces ⬇ ⬇</center>
+
+```typescript
+class User extends Model {
+    id: number
+    override get name() {
+        return super.name ?? Unnamed
+    }
+    override get age() {
+        return super.age ?? 0
+    }
+}
+```
+
+### Emit code earlier or later in the file
+
+`#content_for` can be used to add content to a different location of your file without having to iterate through your data multitple times.
+
+Call `#content_for(some_key) { ... }` with key and a block to store content under the key you provide. Call `#content_for(some_key)` with the key and *no* block to insert your stored content at that location.
+
+```ruby
+models = [
+  { name: 'User', inherits: 'AuthModel' },
+  { name: 'Company', inherits: 'Model' },
+]
+
+Cecil::Code.generate_string do
+  content_for :model_imports
+  ``
+
+  models.each do |model|
+    `class $Class extends $SuperClass {`[model[:name], model[:inherits]] do
+      `id: number`
+    end
+
+    content_for :model_imports do
+      `import $SuperClass from '../models/$SuperClass'`[SuperClass: model[:inherits]]
+    end
+
+    content_for :registrations do
+      `$SuperClass.registerAncestor($Class)`[model[:inherits], model[:name]]
+    end
+  end
+
+  ``
+  content_for :registrations
+end
+```
+
+<center>⬇ ⬇ produces ⬇ ⬇</center>
+
+```typescript
+import AuthModel from '../models/AuthModel'
+import Model from '../models/Model'
+
+class User extends AuthModel {
+    id: number
+}
+class Company extends Model {
+    id: number
+}
+
+AuthModel.registerAncestor(User)
+Model.registerAncestor(Company)
+```
+
+### Collect data as you go, then use it earlier in the document
+
+The `#defer` method takes a block and waits to call it until the rest of the template is evaluated and then the block's result is inserted at the location where `#defer` was called.
+
+This gives a similar ability to `#content_for`, but is more flexible because you can collect any kind of data, not just source code.
+
+```ruby
+models = [
+  { name: 'User', inherits: 'AuthModel' },
+  { name: 'Company', inherits: 'Model' },
+  { name: 'Candidate', inherits: 'AuthModel' },
+]
+
+Cecil::Code.generate_string do
+  superclasses = []
+  defer do
+    `import { $SuperClasses } from '../models'`[superclasses.uniq.sort.join(', ')]
+    ``
+  end
+
+  models.each do |model|
+    superclasses << model[:inherits]
+
+    `class $Class extends $SuperClass {}`[model[:name], model[:inherits]]
+  end
+end
+```
+
+<center>⬇ ⬇ produces ⬇ ⬇</center>
+
+```typescript
+import { AuthModel, Model } from '../models'
+
+class User extends AuthModel {}
+class Company extends Model {}
+class Candidate extends AuthModel {}
+```
 
 ## Installation
 
-TODO: Replace `UPDATE_WITH_YOUR_GEM_NAME_PRIOR_TO_RELEASE_TO_RUBYGEMS_ORG` with your gem name right after releasing it to RubyGems.org. Please do not do it earlier due to security reasons. Alternatively, replace this section with instructions to install your gem from git if you don't plan to release to RubyGems.org.
+Gem can be installed from github. Once I'm ready to bother with version numbers and releases and such, then I'll publish to Rubygems.
 
-Install the gem and add to the application's Gemfile by executing:
+From your shell:
 
-    $ bundle add UPDATE_WITH_YOUR_GEM_NAME_PRIOR_TO_RELEASE_TO_RUBYGEMS_ORG
+```sh
+bundle add cecil --github=nicholaides/cecil
+```
 
-If bundler is not being used to manage dependencies, install the gem by executing:
+Add it to your Gemfile like:
 
-    $ gem install UPDATE_WITH_YOUR_GEM_NAME_PRIOR_TO_RELEASE_TO_RUBYGEMS_ORG
-
-## Usage
-
-TODO: Write usage instructions here
+```ruby
+gem 'cecil', github: 'nicholaides/cecil'
+```
 
 ## Development
 
