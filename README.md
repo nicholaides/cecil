@@ -6,9 +6,10 @@ An experimental templating library for generating source code. Leverages Ruby's 
 
 ### It's just Ruby
 
-Pass a block to Cecil and use backticks (or use `src` if prefer) to add lines of source code. Cecil will return your generated source code as a string.
+Pass a block to Cecil and use backticks (or use `src` if you prefer) to add lines of source code. Cecil will return your generated source code as a string.
 
-E.g.
+Example:
+
 ```ruby
 model_code = Cecil::Code.generate_string do
   `import Model from '../model'`
@@ -40,7 +41,9 @@ export type Username = User['name']
 
 ### Interpolation with high fidelity to intended output
 
-Use `#[]` on the backticks to interpolate values.
+Use `#[]` on the backticks to replace placeholders with actual values.
+
+By default, placeholders start with `$` and are followed by an identifier.
 
 Positional arguments match up with placeholders in order. Named arguments match placeholders by name.
 
@@ -75,7 +78,7 @@ let user: Model<string|string[]> | null = new Model(["DriftingSnowfall","SilentH
 
 ### Indent code blocks & close brackets automatically
 
-A block passed to `#[]` gets indented and open brackets get closed.
+A block passed to `#[]` gets indented and open brackets get closed automatically.
 
 Example:
 
