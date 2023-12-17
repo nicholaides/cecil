@@ -23,7 +23,7 @@ module Cecil
     end
 
     def detached_node(&) = Nodes::DetachedNode.new(root, &)
-    def reattach_node(detacched_node) = detacched_node.attach_to current_node
+    def reattach_node(detached_node) = detached_node.attach_to current_node
 
     def current_node = @active_nodes.last || raise("No active Cecil node...")
     def replace_node(...) = current_node.replace_child(...)

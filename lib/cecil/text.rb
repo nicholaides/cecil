@@ -1,4 +1,5 @@
 module Cecil
+  # Represents the name and location of a placeholder in a string.
   Placeholder = Struct.new(:ident, :offset_start, :offset_end) do
     def range = offset_start...offset_end
   end
@@ -6,6 +7,7 @@ module Cecil
   module Text
     module_function
 
+    # Scan a string and return the match objects
     def scan_for_re_matches(src, regexp) = src.to_enum(:scan, regexp).map { Regexp.last_match }
 
     def reindent(src, depth, indent_chars)
