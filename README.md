@@ -4,12 +4,13 @@ An experimental templating library for generating source code. Leverages Ruby's 
 
 ## Features
 
-### Emit code with as little syntax as possible
+### It's just Ruby
 
-Inside Cecil's block, backticks emit source code (instead of their default behavior of running shell commands).  You can use `#src` if you prefer to avoid backticks.
+Pass a block to Cecil and use backticks (or use `src` if prefer) to add lines of source code. Cecil will return your generated source code as a string.
 
+E.g.
 ```ruby
-Cecil::Code.generate_string do
+model_code = Cecil::Code.generate_string do
   `import Model from '../model'`
 
   `class User extends Model {
@@ -21,9 +22,11 @@ Cecil::Code.generate_string do
   # use #src if you prefer to avoid backticks
   src "export type Username = User['name']"
 end
+
+puts model_code
 ```
 
-<center>⬇ ⬇ produces ⬇ ⬇</center>
+outputs:
 
 ```typescript
 import Model from '../model'
@@ -41,6 +44,8 @@ Use `#[]` on the backticks to interpolate values.
 
 Positional arguments match up with placeholders in order. Named arguments match placeholders by name.
 
+Example:
+
 ```ruby
 field = "user"
 types = ["string", "string[]"]
@@ -50,8 +55,6 @@ field_class = "Model"
 Cecil::Code.generate_string do
   # positional
   `let $field: $FieldType = $default`[field, types.join('|'), default_value.sort.to_json]
-
-  ``
 
   # named
   `let $field: $FieldClass<$Types> | null = new $FieldClass($default)`[
@@ -63,17 +66,18 @@ Cecil::Code.generate_string do
 end
 ```
 
-<center>⬇ ⬇ produces ⬇ ⬇</center>
+returns:
 
 ```typescript
 let user: string|string[] = ["DriftingSnowfall","SilentHaiku"]
-
 let user: Model<string|string[]> | null = new Model(["DriftingSnowfall","SilentHaiku"])
 ```
 
 ### Indent code blocks & close brackets automatically
 
-A block passed to `#[]` will be indented and will close any open brackets at the end of the ``` `` ```
+A block passed to `#[]` gets indented and open brackets get closed.
+
+Example:
 
 ```ruby
 model = "User"
@@ -91,7 +95,7 @@ Cecil::Code.generate_string do
 end
 ```
 
-<center>⬇ ⬇ produces ⬇ ⬇</center>
+returns:
 
 ```typescript
 class User extends Model {
@@ -106,7 +110,9 @@ class User extends Model {
 
 `content_for` can be used to add content to a different location of your file without having to iterate through your data multitple times.
 
-Call `content_for(some_key) { ... }` with key and a block to store content under the key you provide. Call `#content_for(some_key)` with the key and *no* block to insert your stored content at that location.
+Call `content_for(some_key) { ... }` with key and a block to store content under the key you provide. Call `content_for(some_key)` with the key and *no* block to insert your stored content at that location.
+
+Example:
 
 ```ruby
 models = [
@@ -115,16 +121,15 @@ models = [
 ]
 
 Cecil::Code.generate_string do
-  content_for :model_imports
-
-  ``
+  content_for :imports
 
   models.each do |model|
+    ``
     `class $Class extends $SuperClass {`[model[:name], model[:inherits]] do
       `id: number`
     end
 
-    content_for :model_imports do
+    content_for :imports do
       `import $SuperClass from '../models/$SuperClass'`[SuperClass: model[:inherits]]
     end
 
@@ -138,7 +143,7 @@ Cecil::Code.generate_string do
 end
 ```
 
-<center>⬇ ⬇ produces ⬇ ⬇</center>
+returns:
 
 ```typescript
 import AuthModel from '../models/AuthModel'
@@ -147,6 +152,7 @@ import Model from '../models/Model'
 class User extends AuthModel {
     id: number
 }
+
 class Company extends Model {
     id: number
 }
@@ -160,6 +166,8 @@ Model.registerAncestor(Company)
 The `#defer` method takes a block and waits to call it until the rest of the template is evaluated. The block's result is inserted at the location where `#defer` was called.
 
 This gives a similar ability to `#content_for`, but is more flexible because you can collect any kind of data, not just source code.
+
+Example:
 
 ```ruby
 models = [
@@ -183,7 +191,7 @@ Cecil::Code.generate_string do
 end
 ```
 
-<center>⬇ ⬇ produces ⬇ ⬇</center>
+returns:
 
 ```typescript
 import { AuthModel, Model } from '../models'
