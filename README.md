@@ -1,14 +1,12 @@
 # Cecil
 
-An experimental templating library for generating source code. Leverages Ruby's flexible syntax to maximize your template's fidelity to its output.
+An experimental templating library for generating source code. Leverages Ruby's flexible syntax so that your templates can look as much like their output as possible.
 
 ## Features
 
 ### Emit code with as little syntax as possible
 
-Inside Cecil's block, backticks emit source code (instead of their default behavior of running shell commands).
-
-You can use `#src` if you prefer to avoid backticks.
+Inside Cecil's block, backticks emit source code (instead of their default behavior of running shell commands).  You can use `#src` if you prefer to avoid backticks.
 
 ```ruby
 Cecil::Code.generate_string do
@@ -37,7 +35,7 @@ class User extends Model {
 export type Username = User['name']
 ```
 
-### Interpolate with less visual noise & more fidelity to the intended result
+### Interpolation with high fidelity to intended output
 
 Use `#[]` on the backticks to interpolate values.
 
@@ -73,7 +71,7 @@ let user: string|string[] = ["DriftingSnowfall","SilentHaiku"]
 let user: Model<string|string[]> | null = new Model(["DriftingSnowfall","SilentHaiku"])
 ```
 
-### Indent code blocks, and close brackets automatically
+### Indent code blocks & close brackets automatically
 
 A block passed to `#[]` will be indented and will close any open brackets at the end of the ``` `` ```
 
@@ -85,13 +83,12 @@ fields_and_defaults = {
 }
 
 Cecil::Code.generate_string do
-  # open brackets are closed automatically
   `class $Class extends Model {`[model] do
     `id: number`
 
     fields_and_defaults.each do |field, default_value|
-      `override get $field() {`[field] do
-        `return super.$field ?? $defaultValue`[field, default_value]
+      `override get $field() {`[field] d
+        `return super.$field ?? $defaultValue`[field, default_value.to_json]
       end
     end
   end
@@ -104,7 +101,7 @@ end
 class User extends Model {
     id: number
     override get name() {
-        return super.name ?? Unnamed
+        return super.name ?? "Unnamed"
     }
     override get age() {
         return super.age ?? 0
@@ -114,9 +111,9 @@ class User extends Model {
 
 ### Emit code earlier or later in the file
 
-`#content_for` can be used to add content to a different location of your file without having to iterate through your data multitple times.
+`content_for` can be used to add content to a different location of your file without having to iterate through your data multitple times.
 
-Call `#content_for(some_key) { ... }` with key and a block to store content under the key you provide. Call `#content_for(some_key)` with the key and *no* block to insert your stored content at that location.
+Call `content_for(some_key) { ... }` with key and a block to store content under the key you provide. Call `#content_for(some_key)` with the key and *no* block to insert your stored content at that location.
 
 ```ruby
 models = [
@@ -126,6 +123,7 @@ models = [
 
 Cecil::Code.generate_string do
   content_for :model_imports
+
   ``
 
   models.each do |model|
@@ -166,7 +164,7 @@ Model.registerAncestor(Company)
 
 ### Collect data as you go, then use it earlier in the document
 
-The `#defer` method takes a block and waits to call it until the rest of the template is evaluated and then the block's result is inserted at the location where `#defer` was called.
+The `#defer` method takes a block and waits to call it until the rest of the template is evaluated. The block's result is inserted at the location where `#defer` was called.
 
 This gives a similar ability to `#content_for`, but is more flexible because you can collect any kind of data, not just source code.
 
@@ -226,7 +224,7 @@ To install this gem onto your local machine, run `bundle exec rake install`. To 
 
 ## Contributing
 
-Bug reports and pull requests are welcome on GitHub at https://github.com/[USERNAME]/cecil.
+Bug reports and pull requests are welcome on GitHub at https://github.com/nicholaides/cecil.
 
 ## License
 
