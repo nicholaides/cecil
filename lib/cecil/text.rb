@@ -1,17 +1,12 @@
 module Cecil
-  class Placeholder
-    attr_reader :ident, :offset_start, :offset_end
-
-    def initialize(match)
-      @ident = match[:placeholder]
-      @offset_start, @offset_end = match.offset(0)
-    end
-
+  Placeholder = Struct.new(:ident, :offset_start, :offset_end) do
     def range = offset_start...offset_end
   end
 
   module Text
     module_function
+
+    def scan_for_re_matches(src, regexp) = src.to_enum(:scan, regexp).map { Regexp.last_match }
 
     def reindent(src, depth, indent_chars)
       lines = src.lines
