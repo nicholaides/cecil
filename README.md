@@ -77,19 +77,15 @@ A block passed to `#[]` will be indented and will close any open brackets at the
 
 ```ruby
 model = "User"
-fields_and_defaults = {
-  name: "Unnamed",
-  age: 0,
-}
+field_name = "name"
+field_default = "Unnamed"
 
 Cecil::Code.generate_string do
   `class $Class extends Model {`[model] do
     `id: number`
 
-    fields_and_defaults.each do |field, default_value|
-      `override get $field() {`[field] d
-        `return super.$field ?? $defaultValue`[field, default_value.to_json]
-      end
+    `override get $field() {`[field_name] do
+      `return super.$field ?? $defaultValue`[field_name, field_default.to_json]
     end
   end
 end
@@ -102,9 +98,6 @@ class User extends Model {
     id: number
     override get name() {
         return super.name ?? "Unnamed"
-    }
-    override get age() {
-        return super.age ?? 0
     }
 }
 ```
