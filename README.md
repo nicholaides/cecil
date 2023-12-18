@@ -39,7 +39,7 @@ class User extends Model {
 export type Username = User['name']
 ```
 
-### Interpolation with high fidelity to intended output
+### Interpolation syntax with high fidelity to intended output
 
 Use `#[]` on the backticks to replace placeholders with actual values.
 
@@ -204,6 +204,16 @@ class Company extends Model {}
 class Candidate extends AuthModel {}
 ```
 
+## Use cases
+
+Things I've personally used Cecil to generate:
+
+- serialization/deserialization code, generated from from specs (e.g. OpenAPI)
+- diagrams (e.g. Mermaid, PlantUML, and Dot/Graphviz) for ERDs/schemas, state machines, and data viz
+- state machines, generated from a list of states and transitions
+- test cases from lists of inputs and expected outputs; because parameterized tests can be very hard to debug
+- complex TypeScript classes and types, because meta-programming in TypeScript can get complex quickly
+
 ## Installation
 
 Gem can be installed from github. Once I'm ready to bother with version numbers and releases and such, then I'll publish to Rubygems.
@@ -219,7 +229,6 @@ Add it to your Gemfile like:
 ```ruby
 gem 'cecil', github: 'nicholaides/cecil'
 ```
-
 ## Development
 
 After checking out the repo, run `bin/setup` to install dependencies. Then, run `rake spec` to run the tests. You can also run `bin/console` for an interactive prompt that will allow you to experiment.
