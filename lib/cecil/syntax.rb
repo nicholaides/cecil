@@ -12,6 +12,16 @@ module Cecil
     # To turn off indentation, override this method to return an empty string.
     #
     # @return [String] the string to use for each level of indentation. Default is 4 spaces.
+    #
+    # @example Use tab for indentation
+    #    class MySyntax < Cecil::Code
+    #      def indent_chars = "\t"
+    #    end
+    #
+    # @example Use 2 spaces for indentation
+    #    class MySyntax < Cecil::Code
+    #      def indent_chars = "  "
+    #    end
     def indent_chars = "    "
 
     # When indenting with a code block, the end of the code string is searched

@@ -1,6 +1,6 @@
 # Cecil
 
-An experimental templating library for generating source code. Leverages Ruby's flexible syntax so that your templates can look as much like their output as possible.
+An experimental templating library for generating source code. Leverages Ruby's flexible syntax so that your templates can look like the source code you want to generate.
 
 ## Features
 
