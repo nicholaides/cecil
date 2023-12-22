@@ -62,6 +62,7 @@ GEM
     string-similarity (2.1.0)
     tty-option (0.3.0)
     unicode-display_width (2.4.2)
+    yard (0.9.34)
 
 PLATFORMS
   arm64-darwin-22
@@ -73,6 +74,7 @@ DEPENDENCIES
   retest (~> 1.11)
   rspec (~> 3.0)
   rubocop (~> 1.21)
+  yard (~> 0.9.34)
 
 BUNDLED WITH
    2.4.10

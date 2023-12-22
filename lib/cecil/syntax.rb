@@ -1,12 +1,17 @@
 require_relative "text"
 
 module Cecil
+  # Provides default behavior for formatting and manipulating strings of code.
+  # It handles indentation, placeholder substitution, etc.
+  #
+  # To define a class for your own language, subclass {Code} and override
+  # methods of this class.
   class Syntax
-    # Returns the string to use for each level of indentation.
+    # Returns the string to use for each level of indentation. Default is 4 spaces.
     #
-    # Default indentation is 4 spaces.
+    # To turn off indentation, override this method to return an empty string.
     #
-    # To turn off this feature, override this method to return an empty string.
+    # @return [String] the string to use for each level of indentation. Default is 4 spaces.
     def indent_chars = "    "
 
     # When indenting with a code block, the end of the code string is searched
@@ -14,10 +19,29 @@ module Cecil
     # with its matching closing bracket.
     #
     # E.g.
-    # - `my_func([` is closed with "])"
-    # - `my_func( [ ` is closed with " ] )"
     #
-    # To turn off this feature, override this method to return an empty hash.
+    #     `my_func([`   # is closed with "])"
+    #     `my_func( [ ` # is closed with " ] )"
+    #
+    # @return [Hash{String => String}] Pairs of opening/closing strings
+    #
+    # @example Close `{` and `[` brackets.
+    #    class MySyntax < Cecil::Code
+    #      def block_ending_pairs
+    #        {
+    #          "{" => "}",
+    #          "[" => "]",
+    #
+    #          " " => " ", # allows for "my_func  { [ " to be closed with " ] }  "
+    #          "\t" => "\t" # allows for "my_func\t{[\t" to be closed with "\t]}\t"
+    #        }
+    #      end
+    #    end
+    #
+    # @example Turn this feature off, and don't close open brackets
+    #    class MySyntax < Cecil::Code
+    #      def block_ending_pairs = {}
+    #    end
     def block_ending_pairs
       {
         "{" => "}",
@@ -34,17 +58,29 @@ module Cecil
     # used do not change the placeholder's name.
     #
     # E.g., these all produce the same result:
-    # - `\`const $field\`[field: 'username']`
-    # - `\`const ${field}\`[field: 'username']`
-    # - `\`const $[field]\`[field: 'username']`
-    # - `\`const $<field>\`[field: 'username']`
-    # - `\`const $(field)\`[field: 'username']`
+    #
+    #     `const $field`[field: 'username']
+    #     `const ${field}`[field: 'username']
+    #     `const $[field]`[field: 'username']
+    #     `const $<field>`[field: 'username']
+    #     `const $(field)`[field: 'username']
     #
     # By default, `"" => ""` is one of the pairs, meaning you don't need to
     # surround placeholder names.
     #
-    # To turn off this feature (i.e. don't allow brackets around placeholder
-    # names), override this method to return `{ "" => "" }`
+    # @return [Regexp]
+    #
+    # @example Allow `$/my_field/` syntax for placeholders, in addition to the default options
+    #    class MySyntax < Cecil::Code
+    #      def placeholder_delimiting_pairs = super.merge("/" => "/")
+    #    end
+    #
+    # @example Turn off placeholder delimiting pairs (i.e. only allow `$my_field` syntax)
+    #    class MySyntax < Cecil::Code
+    #      def placeholder_delimiting_pairs = { "" => "" }
+    #      # or
+    #      def placeholder_delimiting_pairs = PLACEHOLDER_NO_BRACKETS_PAIR
+    #    end
     def placeholder_delimiting_pairs
       {
         "{" => "}",
@@ -56,28 +92,52 @@ module Cecil
     end
     PLACEHOLDER_NO_BRACKETS_PAIR = { "" => "" }.freeze
 
-    # Regexp to match a placeholder's name.
+    # Regexp to use to match a placeholder's name.
     #
-    # To allow any string as a placeholder name, you'd want to
-    # - override `#placeholder_delimiting_pairs` to return `PLACEHOLDER_NO_BRACKETS_PAIR`
-    # - override this method to return /.*/ (I haven't tried this... the Regexp
-    # might need to be non-greedy)
+    # @return [Regexp]
+    #
+    # @example Only allow all-caps placeholders (e.g. `$MY_FIELD`)
+    #    class MySyntax < Cecil::Code
+    #      def placeholder_ident_re = /[A-Z_]+/
+    #    end
+    #
+    # @example Allow any characters placeholders, and require brackets (e.g. `${ my field ??! :) }`)
+    #    class MySyntax < Cecil::Code
+    #      # override `#placeholder_delimiting_pairs` to allow the default
+    #      # brackets but not allow no brackets
+    #      def placeholder_delimiting_pairs = super.except("")
+    #
+    #      # I haven't tried this... the Regexp might need to be non-greedy
+    #      def placeholder_ident_re = /.+/
+    #    end
     def placeholder_ident_re = /[[:alnum:]_]+/
 
     # Regexp to match a placeholder's starting character(s).
     #
-    # To use no starting characters, override this method to retun an empty
-    # Regexp, i.e. `//`
+    # @return [Regexp]
+    #
+    # @example Make placeholders start with `%`, e.g. `%myField`
+    #    class MySyntax < Cecil::Code
+    #      def placeholder_start_re = /%/
+    #    end
+    #
+    # @example Make placeholders be all-caps without starting characters (e.g. `MY_FIELD`)
+    #    class MySyntax < Cecil::Code
+    #      def placeholder_start_re = //
+    #    end
     def placeholder_start_re = /\$/
 
     # Regexp to match placeholders. By default, this constructs a Regexp from
     # the pieces defined in:
-    # - `#placeholder_delimiting_pairs`
-    # - `#placeholder_ident_re`
-    # - `#placeholder_start_re`
+    #
+    # - {#placeholder_delimiting_pairs}
+    # - {#placeholder_ident_re}
+    # - {#placeholder_start_re}
     #
     # If you override this method, make sure it returns a Regexp that has a
     # capture group named "placeholder".
+    #
+    # @return [Regexp] A regexp with a capture group named "placeholder"
     def placeholder_re
       /
         #{placeholder_start_re}
@@ -95,10 +155,18 @@ module Cecil
       /x
     end
 
-    # Returns a list of `Placeholder` objects representing placeholders found in
+    # Returns a list of {Placeholder} objects representing placeholders found in
     # the given string. The default implementation scans the string for matches
-    # of `#placeholder_re`. This method can be overriden to change the way
-    # placeholders are parsed, or to omit or add placeholders.
+    # of {#placeholder_re}.
+    #
+    # This method can be overriden to change the way placeholders are parsed, or to omit or add placeholders.
+    #
+    # @return [Array<Placeholder>]
+    #
+    # @example Palindromic names are not considered placeholders
+    #    class MySyntax < Cecil::Code
+    #      def scan_for_placeholders(...) = super.reject { _1.ident == _1.ident.reverse }
+    #    end
     def scan_for_placeholders(src)
       Text.scan_for_re_matches(src, placeholder_re)
           .map do |match|

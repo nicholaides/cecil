@@ -1,13 +1,31 @@
 module Cecil
   # Represents the name and location of a placeholder in a string.
   Placeholder = Struct.new(:ident, :offset_start, :offset_end) do
+    # @!attribute ident
+    #   @return [String] the name of this placeholder. E.g. the `ident` of `${my_field}` would be `my_field`
+
+    # @!attribute offset_start
+    #   @return [Integer] the offset where this placeholder starts in the
+    #     string. This number is usually taken from a Regexp match.
+
+    # @!attribute offset_end
+    #   @return [Integer] the offset where this placeholder ends in the
+    #     string. This number is usually taken from a Regexp match.
+
+    # Return the range that this placeholder occupies in the string
+    # @return [Range(Integer)]
     def range = offset_start...offset_end
   end
 
+  # Helper methods for string searching, manipulating, etc.
   module Text
     module_function
 
-    # Scan a string and return the match objects
+    # Scan a string for matches on a Regexp and return each MatchObject
+    #
+    # @param src [String] the string to scan
+    # @param regexp [Regexp] the regexp to scan with
+    # @return [Array<MatchData>] The MatchData objects for each instance of the regexp matched in the string
     def scan_for_re_matches(src, regexp) = src.to_enum(:scan, regexp).map { Regexp.last_match }
 
     def reindent(src, depth, indent_chars)
@@ -65,9 +83,14 @@ module Cecil
       end
     end
 
+    def match_ending_pair(src, block_ending_pairs)
+      return if src.empty?
+
+      block_ending_pairs.detect { |l, _r| src.end_with?(l) }
+    end
+
     def each_closer(src, block_ending_pairs)
-      while !src.empty? && match = block_ending_pairs.detect { |l, _r| src.end_with?(l) }
-        match => [opener, closer]
+      while match_ending_pair(src, block_ending_pairs) in [opener, closer]
         yield closer
         src = src[0...-opener.size]
       end

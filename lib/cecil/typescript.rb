@@ -3,6 +3,7 @@ require "json"
 
 module Cecil
   class TypeScript < Code
+    # Use 2 characters for indentation
     def indent_chars = "  "
 
     helpers do

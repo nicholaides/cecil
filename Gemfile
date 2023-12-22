@@ -12,3 +12,5 @@ gem "rspec", "~> 3.0"
 gem "rubocop", "~> 1.21"
 
 gem "retest", "~> 1.11"
+
+gem "yard", "~> 0.9.34"
