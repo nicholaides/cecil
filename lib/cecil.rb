@@ -9,7 +9,9 @@ module Cecil
   # the syntax helpers and defining custom syntax rules.
   #
   # To define your own syntax, subclass {Code} and override methods defined in {Syntax}.
-  class Code < Syntax
+  class Code
+    include Syntax
+
     class << self
       # Generates output by executing the given block and writing its return
       # value to the provided output buffer/stream
