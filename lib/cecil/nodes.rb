@@ -207,11 +207,6 @@ module Cecil
             Text.interpolate_named(@src, @placeholders, named_values)
           in positional_values, {}, _
             Text.interpolate_positional(@src, @placeholders, positional_values)
-
-          in _, {}, []
-            raise "Mismatch? No placeholder values expected, but received #{args.size} values"
-          in [], _, []
-            raise "Mismatch? No placeholder values expected, but received values for #{options.keys.map(&:inspect).join(", ")}"
           else
             raise "Method expects to be called with either named arguments or positional arguments but not both"
           end
