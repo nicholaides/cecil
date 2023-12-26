@@ -51,15 +51,26 @@ module Cecil
     def interpolate_positional(template, placeholders, args)
       match_idents = placeholders.to_set(&:ident)
 
-      raise "Mismatch?" if match_idents.size != args.size
+      if match_idents.size != args.size
+        raise "Mismatch between number of placeholders (#{placeholders.size}) and given values (#{args.size})"
+      end
 
       replace(template, placeholders, match_idents.zip(args).to_h)
     end
 
     def interpolate_named(template, placeholders, options)
+      values_idents = options.keys.to_set(&:to_s)
       match_idents = placeholders.to_set(&:ident)
 
-      raise "Mismatch?" if match_idents != options.keys.to_set(&:to_s)
+      if match_idents != values_idents
+        missing_values = match_idents - values_idents
+        extra_values = values_idents - match_idents
+        message = "Mismatch between placeholders and provide values."
+        message << "\n Missing values for placeholders #{missing_values.join(", ")}" if missing_values.any?
+        message << "\n Missing placeholders for values #{extra_values.join(", ")}" if extra_values.any?
+
+        raise message
+      end
 
       replace(template, placeholders, options)
     end
