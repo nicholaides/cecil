@@ -1,6 +1,9 @@
 require "forwardable"
 
 module Cecil
+  # The BlockContext contains methods available to you inside a Cecil block.
+  # This includes the methods below as well as any helpers passed in by your Syntax.
+  #
   # TODO: test that it can access methods (and therefore should not inherit from BasicObject)
   # TODO: test that helpers works
   class BlockContext
@@ -13,8 +16,8 @@ module Cecil
 
     # @!method src(source_string)
     #   Inserts a node with the given source string
-    #   @return [Node] a the node to be inserted. The returned node can be
-    #     modified, i.e. by calling `Node#[]` or `#<<`
+    #   @return [Nodes::TemplateNode] a the node to be inserted. The returned node can be
+    #     modified, i.e. by calling {Nodes::TemplateNode#[]}
     def_delegator :@builder, :src
     alias :` :src
 

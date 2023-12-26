@@ -48,27 +48,20 @@ module Cecil
       lines.join
     end
 
-    def interpolate(template, placeholders, args, options)
+    def interpolate_positional(template, placeholders, args)
       match_idents = placeholders.to_set(&:ident)
 
-      subs = [args, options]
+      raise "Mismatch?" if match_idents.size != args.size
 
-      case subs
-      in [], {}
-        raise "Mismatch?" if placeholders.any?
+      replace(template, placeholders, match_idents.zip(args).to_h)
+    end
 
-        template
-      in [], opts
-        raise "Mismatch?" if match_idents != opts.keys.to_set(&:to_s)
+    def interpolate_named(template, placeholders, options)
+      match_idents = placeholders.to_set(&:ident)
 
-        replace(template, placeholders, opts)
-      in args, {}
-        raise "Mismatch?" if match_idents.size != args.size
+      raise "Mismatch?" if match_idents != options.keys.to_set(&:to_s)
 
-        replace(template, placeholders, match_idents.zip(args).to_h)
-      else
-        raise "Expects args or opts but not both: #{subs.inspect}"
-      end
+      replace(template, placeholders, options)
     end
 
     def replace(src, placeholders, placeholder_inputs)
