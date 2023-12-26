@@ -208,8 +208,6 @@ module Cecil
           in positional_values, {}, _
             Text.interpolate_positional(@src, @placeholders, positional_values)
 
-          in [], {}, _
-            raise "Mismatch? The following placeholders expected values to be given, but none were: #{@placeholders.map(&:ident).uniq.join(", ")}"
           in _, {}, []
             raise "Mismatch? No placeholder values expected, but received #{args.size} values"
           in [], _, []
