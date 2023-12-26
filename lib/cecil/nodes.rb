@@ -209,13 +209,13 @@ module Cecil
             Text.interpolate_positional(@src, @placeholders, positional_values)
 
           in [], {}, _
-            raise "Mismatch?"
+            raise "Mismatch? The following placeholders expected values to be given, but none were: #{@placeholders.map(&:ident).uniq.join(", ")}"
           in _, {}, []
-            raise "Mismatch?"
+            raise "Mismatch? No placeholder values expected, but received #{args.size} values"
           in [], _, []
-            raise "Mismatch?"
+            raise "Mismatch? No placeholder values expected, but received values for #{options.keys.map(&:inspect).join(", ")}"
           else
-            raise "Expects to be called with named arguments or positional arguments but not both"
+            raise "Method expects to be called with either named arguments or positional arguments but not both"
           end
 
         CodeLiteralNode
