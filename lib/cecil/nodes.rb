@@ -3,6 +3,7 @@ require_relative "text"
 
 module Cecil
   module Nodes
+    # @!visibility private
     module AsParentNode
       def self.included(base)
         base.attr_accessor :children
@@ -40,23 +41,58 @@ module Cecil
     end
 
     class AbstractNode
+      # @!visibility private
       attr_accessor :parent
 
+      # @!visibility private
       def initialize(parent:)
         self.parent = parent
       end
 
+      # @!visibility private
       def builder = root.builder
+
+      # @!visibility private
       def root = parent.root
+
+      # @!visibility private
       def depth = parent.depth + 1
 
+      # @!visibility private
       def evaluate! = self
 
+      # @!visibility private
       # TODO: we do need this, right? the tests don't seem to think so
       def replace_child(...) = nil
+
+      # Add placeholder values and/or nest a block of code.
+      #
+      # Placeholder values can be given as positional arguments or named values
+      #
+      # When called with a block, the block is called immediately and any source
+      # code emitted in that is nested under the current block.
+      #
+      # @overload with(*positional_values)
+      #   @return [CodeLiteralNode]
+      # @overload with(*positional_values, &)
+      #   @return [CodeLiteralWithChildrenNode]
+      # @overload with(**named_values)
+      #   @return [CodeLiteralNode]
+      # @overload with(**named_values, &)
+      #   @return [CodeLiteralWithChildrenNode]
+      # @overload with(&)
+      #   @return [CodeLiteralWithChildrenNode]
+      def with(...) = raise "Not implemented"
     end
 
+    # Node that will be replaced with its children, after the rest of the
+    # document is evaluated.
+    #
+    # Created by calling {BlockContext#defer} or by the internal workings of {BlockContext#content_for}.
+    # @see BlockContext#defer
+    # @see BlockContext#content_for
     class DeferredNode < AbstractNode
+      # @!visibility private
       def initialize(**, &)
         super(**)
 
@@ -66,9 +102,11 @@ module Cecil
         end
       end
 
+      # @!visibility private
       def evaluate!(...) = @evaluate.call(...)
     end
 
+    # @!visibility private
     class RootNode < AbstractNode
       include AsParentNode
 
@@ -90,45 +128,64 @@ module Cecil
       def build_child(src:, parent: self) = TemplateNode.build(src:, parent:, builder:)
     end
 
+    # @!visibility private
     class ContainerNode < AbstractNode
       include AsParentNode
 
       def depth = parent.depth
     end
 
+    # Node that will be inserted in another location in the document.
+    #
+    # Created by {BlockContext#content_for}
+    #
+    # @see BlockContext#content_for
     class DetachedNode < ContainerNode
+      # @!visibility private
       attr_accessor :root
 
+      # @!visibility private
       def initialize(root, &)
         @root = root
         super(parent: nil, &)
       end
 
+      # @!visibility private
       def attach_to(new_parent)
         self.parent = new_parent
         new_parent.add_child self
       end
     end
 
+    # Node with source code, no placeholders, and no child nodes
     class CodeLiteralNode < AbstractNode
+      # @!visibility private
       def self.build(...)
         klass = block_given? ? CodeLiteralWithChildrenNode : self
         klass.new(...)
       end
 
+      # @!visibility private
       def initialize(src:, **)
         super(**)
         @src = src
       end
 
+      # @overload with(&)
+      #
+      # Behaves like {TemplateNode#with}, except does not accept any arguments
+      # because a node of this type has no placeholders.
+      #
+      # @see TemplateNode#with
       def with(*args, **options, &)
         raise "Has no placeholders" if args.any? || options.any?
+
+        raise "Has no block" unless block_given?
 
         self.class.build(src: @src, parent:, &)
             .tap { builder.replace_node self, _1 }
       end
 
-      # dx/node
       alias call with
       alias [] with
 
@@ -138,7 +195,7 @@ module Cecil
         src
       end
 
-      def stringify(...)= stringify_src(...)
+      alias stringify stringify_src
 
       # TODO: do we need to define #<< ?
     end
@@ -146,6 +203,7 @@ module Cecil
     class CodeLiteralWithChildrenNode < CodeLiteralNode
       include AsParentNode
 
+      # @!visibility private
       def closers(syntax)
         # TODO: test the @src.strip
         closing_brackets = Text.closers(@src.strip, syntax.block_ending_pairs).to_a
@@ -153,6 +211,7 @@ module Cecil
         Text.reindent("#{closing_brackets.join.strip}\n", depth, syntax.indent_chars)
       end
 
+      # @!visibility private
       def stringify(...)
         [
           stringify_src(...),
@@ -161,7 +220,6 @@ module Cecil
         ].join
       end
 
-      # dx/node
       def <<(item)
         case item
         in CodeLiteralNode then nil # TODO: test this... where should << be defined?
@@ -170,10 +228,8 @@ module Cecil
       end
     end
 
-    # A node generated by calling {BlockContext#src} or {BlockContext#``}.
-    #
-    # Placeholder values can be given by calling {#[]}/{#with}.
     class TemplateNode < AbstractNode
+      # @!visibility private
       def self.build(src:, builder:, **)
         placeholders = builder.syntax.scan_for_placeholders(src)
 
@@ -184,28 +240,22 @@ module Cecil
         end
       end
 
+      # @!visibility private
       def initialize(src:, placeholders:, **)
         super(**)
         @src = src
         @placeholders = placeholders
       end
 
-      # @overload with(*args)
-      #   @return [CodeLiteralNode]
-      # @overload with(**options)
-      #   @return [CodeLiteralNode]
-      # @overload with(*args, &)
-      #   @return [CodeLiteralWithChildrenNode]
-      # @overload with(**options, &)
-      #   @return [CodeLiteralWithChildrenNode]
-      def with(*args, **options, &)
+      # @see AbstractNode#with
+      def with(*positional_values, **named_values, &)
         src =
-          case [args, options, @placeholders]
+          case [positional_values, named_values, @placeholders]
           in [], {}, []
             @src
-          in [], named_values, _
+          in [], _, _
             Text.interpolate_named(@src, @placeholders, named_values)
-          in positional_values, {}, _
+          in _, {}, _
             Text.interpolate_positional(@src, @placeholders, positional_values)
           else
             raise "Method expects to be called with either named arguments or positional arguments but not both"
@@ -219,10 +269,9 @@ module Cecil
       alias call with
       alias [] with
 
-      # Raises If this method is called, it means that the
-      #   placeholder values were never given (i.e. {#with}/{#[]} was never called).
-      # @return [raises exception] Does not return, only raises an exception
-      # @raise [Exception]
+      # @!visibility private
+      # Raises If this method is called, it means that the placeholder values
+      # were never given (i.e. {#with}/{#[]} was never called).
       def stringify(*) = raise "Mismatch?"
     end
   end
