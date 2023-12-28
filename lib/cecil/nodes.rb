@@ -65,24 +65,109 @@ module Cecil
       # TODO: we do need this, right? the tests don't seem to think so
       def replace_child(...) = nil
 
-      # Add placeholder values and/or nest a block of code.
+      # Provide values for placeholders and/or nest a block of code. When
+      # called, will replace this node with a {CodeLiteralNode} or
+      # {CodeLiteraleWithChildrenNode}
       #
-      # Placeholder values can be given as positional arguments or named values
+      # Placeholder values can be given as positional arguments or named values,
+      # but not both.
       #
       # When called with a block, the block is called immediately and any source
-      # code emitted in that is nested under the current block.
+      # code emitted is nested under the current block.
+      #
+      # @return [AbstractNode]
       #
       # @overload with(*positional_values)
-      #   @return [CodeLiteralNode]
-      # @overload with(*positional_values, &)
-      #   @return [CodeLiteralWithChildrenNode]
       # @overload with(**named_values)
-      #   @return [CodeLiteralNode]
+      # @overload with(*positional_values, &)
       # @overload with(**named_values, &)
-      #   @return [CodeLiteralWithChildrenNode]
       # @overload with(&)
-      #   @return [CodeLiteralWithChildrenNode]
-      def with(...) = raise "Not implemented"
+      #
+      # @example Positional values are replaced in the order given
+      #   `const $field = $value`["user", "Alice".to_json]
+      #   # const user = "Alice"
+      #
+      # @example Positional values replace all placeholders with the same name
+      #   `const $field: $Namespace.$Class = new $Namespace.$Class()`["user", "Models", "User"]
+      #   # const user: Models.User = new Models.User()
+      #
+      # @example Named values replace all placeholders with the given name
+      #   `const $field = $value`[field: "user", value: "Alice".to_json]
+      #   # const user = "Alice"
+      #
+      #   `const $field: $Class = new $Class()`[field: "user", Class: "User"]
+      #   # const user: User = new User()
+      #
+      # @example Blocks indent their emitted contents (see {Syntax#indent_chars})
+      #   `class $Class {`["User"] do
+      #     `public $field: $type`["name", "string"]
+      #
+      #     # multiline nodes still get indented correctly
+      #     `get id() {
+      #       return this.name
+      #     }`
+      #
+      #     # nodes can nest arbitrarily deep
+      #     `get $field() {`["upperCaseName"] do
+      #       `return this.name.toUpperCase()`
+      #     end
+      #   end
+      #
+      #   # class User {
+      #   #   public name: string
+      #   #   get id() {
+      #   #     return this.name
+      #   #   }
+      #   #   get upperCaseName() {
+      #   #     return this.name.toUpperCase()
+      #   #   }
+      #   # }
+      #
+      # @example Blocks close trailing open brackets (defined in {Syntax#block_ending_pairs})
+      #   `ids = new Set([`[] do
+      #     `1, 2, 3`
+      #   end
+      #   # ids = new Set([
+      #   #   1, 2, 3
+      #   # ])
+      #
+      # @see Syntax
+      def with(*positional_values, **named_values, &) = raise "Not implemented" # rubocop:disable Lint/UnusedMethodArgument
+
+      # Alias of {#with}
+      # @return [AbstractNode]
+      def [](...)
+        # don't use alias/alias_method b/c subclasses overriding `with` need `[]` to call `self.with`
+        with(...)
+      end
+
+      # Alias of {#with}
+      # @return [AbstractNode]
+      def call(...) = with(...)
+
+      # Append a string or node to the node, without making a new line.
+      #
+      # @param string_or_node [String, AbstractNode]
+      # @return [AbstractNode]
+      #
+      # @example Append a string to close brackets that aren't closed automatically
+      #   `test("quacks like a duck", () => {`[] do
+      #     `expect(duck)`
+      #   end << ')' # closes open bracket from "test("
+      #
+      #   # test("quacks like a duck", () => {
+      #   #   expect(duck)
+      #   # })
+      #
+      # @example Use backticks to append brackets
+      #   `test("quacks like a duck", () => {`[] do
+      #     `expect(duck)`
+      #   end << `)` # closes open bracket from "test("
+      #
+      #   # test("quacks like a duck", () => {`
+      #   #   expect(duck)
+      #   # })
+      def <<(string_or_node) = raise "Not implemented" # rubocop:disable Lint/UnusedMethodArgument
     end
 
     # Node that will be replaced with its children, after the rest of the
@@ -157,7 +242,10 @@ module Cecil
       end
     end
 
-    # Node with source code, no placeholders, and no child nodes
+    # Node with source code, no placeholders, and no child nodes.
+    #
+    # Will not accept any placeholder values, but can receive children via
+    # {#with}/{#[]} and will replace itself with a {CodeLiteralWithChildrenNode}.
     class CodeLiteralNode < AbstractNode
       # @!visibility private
       def self.build(...)
@@ -171,12 +259,6 @@ module Cecil
         @src = src
       end
 
-      # @overload with(&)
-      #
-      # Behaves like {TemplateNode#with}, except does not accept any arguments
-      # because a node of this type has no placeholders.
-      #
-      # @see TemplateNode#with
       def with(*args, **options, &)
         raise "Has no placeholders" if args.any? || options.any?
 
@@ -186,20 +268,20 @@ module Cecil
             .tap { builder.replace_node self, _1 }
       end
 
-      alias call with
-      alias [] with
-
+      # @!visibility private
       def stringify_src(syntax)
         src = Text.reindent(@src, depth, syntax.indent_chars)
         src += "\n" unless src.end_with?("\n")
         src
       end
 
+      # @!visibility private
       alias stringify stringify_src
 
       # TODO: do we need to define #<< ?
     end
 
+    # Node with source code, no placeholders, and child nodes
     class CodeLiteralWithChildrenNode < CodeLiteralNode
       include AsParentNode
 
@@ -220,14 +302,21 @@ module Cecil
         ].join
       end
 
-      def <<(item)
+      # See {AbstractNode#<<}
+      # @return [AbstractNode]
+      def <<(string_or_node)
         case item
         in CodeLiteralNode then nil # TODO: test this... where should << be defined?
-        in String then builder.src(item)
+        in String then builder.src(string_or_node)
         end
       end
     end
 
+    # A node that has placeholders but does not yet have values or chilren.
+    # Created with backticks or {BlockContext#src}
+    #
+    # When {#with}/{#[]} is called on the node, it will replace itself with a
+    # {CodeLiteralNode} or {CodeLiteralNodeWithChildren}
     class TemplateNode < AbstractNode
       # @!visibility private
       def self.build(src:, builder:, **)
@@ -266,12 +355,9 @@ module Cecil
           .tap { builder.replace_node self, _1 }
       end
 
-      alias call with
-      alias [] with
-
       # @!visibility private
-      # Raises If this method is called, it means that the placeholder values
-      # were never given (i.e. {#with}/{#[]} was never called).
+      # If this method is called, it means that the placeholder values were
+      # never given (i.e. {#with}/{#[]} was never called).
       def stringify(*) = raise "Mismatch?"
     end
   end
