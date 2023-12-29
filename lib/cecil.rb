@@ -65,21 +65,22 @@ module Cecil
       #   of {Code} has its own helpers module.
       #
       #   E.g.
-      #     class HTML < Cecil::Code
-      #       helpers do
-      #         def h(str) = CGI.escape(str)
-      #       end
-      #     end
       #
-      #     page = "My Geocities Site ~~< >~~"
-      #     HTML.generate_string do
-      #       `<title>$page</title>`[h page]
-      #     end
+      #       class HTML < Cecil::Code
+      #         helpers do
+      #           def h(str) = CGI.escape(str)
+      #         end
+      #       end
+      #
+      #       page = "My Geocities Site ~~< >~~"
+      #       HTML.generate_string do
+      #         `<title>$page</title>`[h page]
+      #       end
       #
       #   @yield If given a block, calls the block inside a new Module and returns the module.
       #
       # @overload helpers
-      #   Return the module with the helpers defined by calling .helpers with a block
+      #   @return [Module] the module with the helpers defined by calling .helpers with a block
       def helpers(&)
         @helpers ||= Module.new
         @helpers.module_exec(&) if block_given?
