@@ -305,7 +305,7 @@ module Cecil
       # See {AbstractNode#<<}
       # @return [AbstractNode]
       def <<(string_or_node)
-        case item
+        case string_or_node
         in CodeLiteralNode then nil # TODO: test this... where should << be defined?
         in String then builder.src(string_or_node)
         end
