@@ -22,8 +22,13 @@ module Cecil
     #   {Nodes::AbstractNode#with}/{Nodes::AbstractNode#[]}
     #
     #   @return [Nodes::AbstractNode] the inserted node
+    #
+    #   @overload src(source_string)
+    #   @overload `(source_string)
     def_delegator :@builder, :src
-    alias :` :src
+
+    # Alias for {#src}
+    def `(source_string) = @builder.src(source_string)
 
     # @!method defer(&)
     #   Defer execution of the the given block until the rest of the document is

@@ -313,7 +313,7 @@ module Cecil
     end
 
     # A node that has placeholders but does not yet have values or chilren.
-    # Created with backticks or {BlockContext#src}
+    # Created with backticks or {BlockContext#src `` #`(code_str) ``}
     #
     # When {#with}/{#[]} is called on the node, it will replace itself with a
     # {CodeLiteralNode} or {CodeLiteralNodeWithChildren}
