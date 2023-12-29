@@ -1,4 +1,5 @@
 module Cecil
+  # @!visibility private
   class ContentFor
     def initialize(store:, place:, defer:)
       @store = store
@@ -16,6 +17,8 @@ module Cecil
       else
         @defer.call { content_for!(key) }
       end
+
+      nil
     end
 
     def content_for?(key) = @content.key?(key)

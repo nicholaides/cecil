@@ -7,6 +7,7 @@ module Cecil
   # TODO: test that it can access methods (and therefore should not inherit from BasicObject)
   # TODO: test that helpers works
   class BlockContext
+    # @!visibility private
     def initialize(builder, helpers)
       @builder = builder
       extend helpers
@@ -15,9 +16,12 @@ module Cecil
     extend Forwardable
 
     # @!method src(source_string)
-    #   Inserts a node with the given source string
-    #   @return [Nodes::TemplateNode] a the node to be inserted. The returned node can be
-    #     modified, i.e. by calling {Nodes::TemplateNode#[]}
+    #   Inserts a node with the given source string.
+    #
+    #   The inserted node can be modified by calling
+    #   {Nodes::AbstractNode#with}/{Nodes::AbstractNode#[]}
+    #
+    #   @return [Nodes::AbstractNode] the inserted node
     def_delegator :@builder, :src
     alias :` :src
 
@@ -28,7 +32,7 @@ module Cecil
     #   @return [Nodes::DeferredNode]
     def_delegator :@builder, :defer
 
-    # @!method content_for
+    # @!method content_for(key, &)
     #   Stores content for the given key to be insert at a different location in
     #   the document.
     #
@@ -36,8 +40,10 @@ module Cecil
     #   If no block is passed but the key already has content, it will be retrieved.
     #   Otherwise, content rendering will be deferred until later.
     #
-    #   @param [Anything] key Any hashable object to identify the content
-    #     but can be anything that works as a hash key
+    #   @param [#hash] key Any hashable object to identify the content but can
+    #     be anything that works as a hash key
+    #
+    #   @return [nil]
     #
     #   @example Storing content for earlier insertion
     #     content_for :imports # inserts `import { Component } from 'react'` here
@@ -81,27 +87,29 @@ module Cecil
     #
     #   @overload content_for(key)
     #     Insert the stored content for the given key
-    #     @return [Nodes::DetachedNode] A node of stored content for the given key
+    #     @return [nil] A node of stored content for the given key
     #
     #   @overload content_for(key, &)
     #     Store content to be be inserted at a different position in the file
     #     @yield The content in the block is evaluated immediately and stored for later insertion
-    #     @return [Nodes::DetachedNode]
+    #     @return [nil]
     def_delegator :@builder, :content_for
 
     # @!method content_for?(key)
     #   Returns whether there is any content stored for the given key. This method
     #     returns immediately and will return false even if `#content_for(key) { ... }` is called later.
-    #   @param [Anything] key Any hashable object to identify the content
+    #   @param [#hash] key Any hashable object to identify the content
     #   @return [Boolean] whether any content is stored for the given key
     def_delegator :@builder, :content_for?
 
     # @!method content_for!(key)
     #   Returns the content stored for the given key, and raises an exception if
-    #     there is no content stored. Calling {#content_for!} is evaluated
-    #     immeditately and will raise an exception even if `#content_for(key) { ... }` is called later.
-    #   @param [Anything] key Any hashable object to identify the content
-    #   @return [Nodes::DetachedNode] A node of stored content for the given key
+    #   there is no content stored. Calling {#content_for!} is evaluated
+    #   immeditately and will raise an exception even if
+    #   `#content_for(key) { ... }` is called later.
+    #
+    #   @param [#hash] key Any hashable object to identify the content
+    #   @return [Array<Nodes::DetachedNode>] A node of stored content for the given key
     #   @throw [Exception] Throws an execption if there is no content stored at the given key
     def_delegator :@builder, :content_for!
   end

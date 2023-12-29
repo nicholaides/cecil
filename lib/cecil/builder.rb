@@ -4,6 +4,7 @@ require_relative "nodes"
 require "forwardable"
 
 module Cecil
+  # @!visibility private
   class Builder
     attr_accessor :root, :syntax
 
