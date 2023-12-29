@@ -19,7 +19,9 @@ module Cecil
       # The stream is written to by calling `#<<` with the generated source code.
       #
       # @param [#<<] out The output buffer/stream to write to
-      # @yield The given block can use backticks to add lines of code to the buffer/stream.
+      # @yield The given block can use backticks (i.e.
+      # {BlockContext#src `` #`(code_str) ``} ) to add lines of code to the
+      # buffer/stream.
       # @return The returned value of `out <<`
       #
       # @example Outputing to stdout

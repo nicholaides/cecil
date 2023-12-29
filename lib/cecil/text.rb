@@ -28,6 +28,13 @@ module Cecil
     # @return [Array<MatchData>] The MatchData objects for each instance of the regexp matched in the string
     def scan_for_re_matches(src, regexp) = src.to_enum(:scan, regexp).map { Regexp.last_match }
 
+    # Reindent `src` string to the level specified by `depth`. `indent_chars` is
+    # used to determine the current level of indentation as well as add more
+    # indentation.
+    #
+    # @param src [String]
+    # @param depth [Integer]
+    # @param indent_chars [String]
     def reindent(src, depth, indent_chars)
       lines = src.lines
       lines.shift if lines.first == "\n"
@@ -48,6 +55,13 @@ module Cecil
       lines.join
     end
 
+    # Interpolate positional placeholder values into a string
+    #
+    # @param template [String]
+    # @param placeholders [Array<Placeholder>]
+    # @param options [Array<#to_s>]
+    # @return [String] `template`, except with placeholders replaced with
+    #   provided values
     def interpolate_positional(template, placeholders, args)
       match_idents = placeholders.to_set(&:ident)
 
@@ -58,6 +72,13 @@ module Cecil
       replace(template, placeholders, match_idents.zip(args).to_h)
     end
 
+    # Interpolate named placeholder values into a string
+    #
+    # @param template [String]
+    # @param placeholders [Array<Placeholder>]
+    # @param options [Hash{#to_s=>#to_s}]
+    # @return [String] `template`, except with placeholders replaced with
+    #   provided values
     def interpolate_named(template, placeholders, options)
       values_idents = options.keys.to_set(&:to_s)
       match_idents = placeholders.to_set(&:ident)
@@ -75,10 +96,17 @@ module Cecil
       replace(template, placeholders, options)
     end
 
-    def replace(src, placeholders, placeholder_inputs)
+    # Replace placeholders in the string with provided values
+    #
+    # @param template [String]
+    # @param placeholders [Array<Placeholder>]
+    # @param placeholder_inputs [Hash{#to_s=>#to_s}]
+    # @return [String] `template`, except with placeholders replaced with
+    #   provided values
+    def replace(template, placeholders, placeholder_inputs)
       values = placeholder_inputs.transform_keys(&:to_s)
 
-      src.dup.tap do |new_src|
+      template.dup.tap do |new_src|
         placeholders.reverse.each do |placeholder|
           value = values.fetch(placeholder.ident)
 
@@ -87,19 +115,35 @@ module Cecil
       end
     end
 
+    # Returns any closing bracket found
+    #
+    # @param src [String]
+    # @param block_ending_pairs [Hash{String=>String}]
     def match_ending_pair(src, block_ending_pairs)
       return if src.empty?
 
-      block_ending_pairs.detect { |l, _r| src.end_with?(l) }
+      block_ending_pairs.detect { |opener, _closer| src.end_with?(opener) }
     end
 
-    def each_closer(src, block_ending_pairs)
+    # Returns or yields each closing bracket.
+    #
+    # @param src [String]
+    # @param block_ending_pairs [Hash{String=>String}]
+    #
+    # @overload closers(src, block_ending_pairs, &)
+    #   With block given, behaves like {.each_closer}
+    #   @yield [String]
+    #
+    # @overload closers(src, block_ending_pairs)
+    #   When no block is given, returns an enumerator of the {.each_closer} method
+    #   @return [Enumerator<String>]
+    def closers(src, block_ending_pairs)
+      return enum_for(:closers, src, block_ending_pairs) unless block_given?
+
       while match_ending_pair(src, block_ending_pairs) in [opener, closer]
         yield closer
         src = src[0...-opener.size]
       end
     end
-
-    def closers(...) = block_given? ? each_closer(...) : enum_for(:each_closer, ...) # rubocop:disable Lint/ToEnumArguments
   end
 end
