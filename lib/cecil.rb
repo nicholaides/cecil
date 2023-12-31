@@ -5,15 +5,10 @@ require_relative "cecil/code"
 
 module Cecil
   # @!visibility private
-  def self.generate(syntax_class:, out:, &)
-    builder = Builder.new(syntax_class.new)
-    BlockContext.new(builder, syntax_class::Helpers).instance_exec(&)
-
-    builder
-      .root
-      .evaluate!
-      .stringify
-      .lstrip
+  def self.generate(out:, syntax_class:, &)
+    Builder
+      .new(syntax_class)
+      .build(&)
       .then { out << _1 }
   end
 end

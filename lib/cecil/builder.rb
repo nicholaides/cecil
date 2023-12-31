@@ -11,8 +11,10 @@ module Cecil
     extend Forwardable
     def_delegators :@content_for, :content_for, :content_for!, :content_for?
 
-    def initialize(syntax)
-      @syntax = syntax
+    def initialize(syntax_class, &)
+      @syntax = syntax_class.new
+      @helpers = syntax_class::Helpers
+
       @root = Nodes::RootNode.new(self)
       @active_nodes = [@root]
 
@@ -21,6 +23,16 @@ module Cecil
         place: method(:reattach_node),
         defer: method(:defer)
       )
+    end
+
+    def build(&)
+      @block_context = BlockContext.new(self, @helpers)
+      @block_context.instance_exec(&)
+
+      root
+        .evaluate!
+        .stringify
+        .lstrip
     end
 
     def detached_node(&) = Nodes::DetachedNode.new(root, &)
