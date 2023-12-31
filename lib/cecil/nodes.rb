@@ -35,9 +35,9 @@ module Cecil
         end
       end
 
-      def stringify_children(...) = children.map { _1.stringify(...) }
+      def stringify_children = children.map(&:stringify)
 
-      def stringify(...) = stringify_children(...).join
+      def stringify = stringify_children.join
     end
 
     class AbstractNode
@@ -265,8 +265,8 @@ module Cecil
       end
 
       # @!visibility private
-      def stringify_src(syntax)
-        src = Text.reindent(@src, depth, syntax.indent_chars)
+      def stringify_src
+        src = Text.reindent(@src, depth, builder.syntax.indent_chars)
         src += "\n" unless src.end_with?("\n")
         src
       end
@@ -282,19 +282,19 @@ module Cecil
       include AsParentNode
 
       # @!visibility private
-      def closers(syntax)
+      def closers
         # TODO: test the @src.strip
-        closing_brackets = Text.closers(@src.strip, syntax.block_ending_pairs).to_a
+        closing_brackets = Text.closers(@src.strip, builder.syntax.block_ending_pairs).to_a
 
-        Text.reindent("#{closing_brackets.join.strip}\n", depth, syntax.indent_chars)
+        Text.reindent("#{closing_brackets.join.strip}\n", depth, builder.syntax.indent_chars)
       end
 
       # @!visibility private
-      def stringify(...)
+      def stringify
         [
-          stringify_src(...),
-          *stringify_children(...),
-          *closers(...)
+          stringify_src,
+          *stringify_children,
+          *closers
         ].join
       end
 
@@ -354,7 +354,7 @@ module Cecil
       # @!visibility private
       # If this method is called, it means that the placeholder values were
       # never given (i.e. {#with}/{#[]} was never called).
-      def stringify(*) = raise "Mismatch?"
+      def stringify = raise "Mismatch?"
     end
   end
 end

@@ -5,17 +5,13 @@ require_relative "cecil/syntax"
 
 module Cecil
   def self.generate(syntax_class:, out:, &)
-    syntax = syntax_class.new
-    helpers = syntax_class::Helpers
-
-    builder = Builder.new(syntax)
-
-    BlockContext.new(builder, helpers).instance_exec(&)
+    builder = Builder.new(syntax_class.new)
+    BlockContext.new(builder, syntax_class::Helpers).instance_exec(&)
 
     builder
       .root
       .evaluate!
-      .stringify(syntax)
+      .stringify
       .lstrip
       .then { out << _1 }
   end
