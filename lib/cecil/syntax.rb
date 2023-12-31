@@ -6,7 +6,7 @@ module Cecil
   #
   # To define a class for your own language, subclass {Code} and override
   # methods of this class.
-  module Syntax
+  class Syntax
     # Returns the string to use for each level of indentation. Default is 4 spaces.
     #
     # To turn off indentation, override this method to return an empty string.
@@ -155,9 +155,7 @@ module Cecil
           placeholder_delimiting_pairs.map do |pstart, pend|
             /
               #{Regexp.quote pstart}
-              (?<placeholder>
-                #{placeholder_ident_re}
-              )
+              (?<placeholder>#{placeholder_ident_re})
               #{Regexp.quote pend}
             /x
           end
