@@ -19,9 +19,9 @@ module Cecil
     #   Inserts a node with the given source string.
     #
     #   The inserted node can be modified by calling
-    #   {Nodes::AbstractNode#with}/{Nodes::AbstractNode#[]}
+    #   {Node#with}/{Node#[]}
     #
-    #   @return [Nodes::AbstractNode] the inserted node
+    #   @return [Node] the inserted node
     #
     #   @overload src(source_string)
     #   @overload `(source_string)
@@ -34,7 +34,7 @@ module Cecil
     #   Defer execution of the the given block until the rest of the document is
     #   evaluated and insert any content in the document where this method was
     #   called.
-    #   @return [Nodes::DeferredNode]
+    #   @return [Node::Deferred]
     def_delegator :@builder, :defer
 
     # @!method content_for(key, &)
@@ -114,7 +114,7 @@ module Cecil
     #   `#content_for(key) { ... }` is called later.
     #
     #   @param [#hash] key Any hashable object to identify the content
-    #   @return [Array<Nodes::DetachedNode>] A node of stored content for the given key
+    #   @return [Array<Node::Detached>] A node of stored content for the given key
     #   @throw [Exception] Throws an execption if there is no content stored at the given key
     def_delegator :@builder, :content_for!
   end

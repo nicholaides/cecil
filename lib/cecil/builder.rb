@@ -15,7 +15,7 @@ module Cecil
       @syntax = syntax_class.new
       @helpers = syntax_class::Helpers
 
-      @root = Nodes::RootNode.new(self)
+      @root = Node::RootNode.new(self)
       @active_nodes = [@root]
 
       @content_for = ContentFor.new(
@@ -35,7 +35,7 @@ module Cecil
         .lstrip
     end
 
-    def detached_node(&) = Nodes::DetachedNode.new(root, &)
+    def detached_node(&) = Node::Detached.new(root, &)
     def reattach_node(detached_node) = detached_node.attach_to current_node
 
     def current_node = @active_nodes.last || raise("No active Cecil node...")
@@ -50,7 +50,7 @@ module Cecil
 
     def src(src) = add_node current_node.build_child(src:)
 
-    def defer(&) = add_node Nodes::DeferredNode.new(parent: current_node, &)
+    def defer(&) = add_node Node::Deferred.new(parent: current_node, &)
 
     def add_node(child)
       current_node.add_child child
