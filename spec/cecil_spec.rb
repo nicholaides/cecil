@@ -553,9 +553,9 @@ RSpec.describe Cecil do
 
   describe "customizing configuration" do
     it "works" do
-      require "cecil/typescript"
+      require "cecil/lang/typescript"
       expect(
-        Cecil::TypeScript.generate_string do
+        Cecil::Lang::TypeScript.generate_string do
           `function($args) {`[l %w[a b c]] do
             `doStuff()`
           end
