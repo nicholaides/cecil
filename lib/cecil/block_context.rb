@@ -3,9 +3,6 @@ require "forwardable"
 module Cecil
   # The BlockContext contains methods available to you inside a Cecil block.
   # This includes the methods below as well as any helpers passed in by your Syntax.
-  #
-  # TODO: test that it can access methods (and therefore should not inherit from BasicObject)
-  # TODO: test that helpers works
   class BlockContext
     # @!visibility private
     def initialize(builder, helpers)

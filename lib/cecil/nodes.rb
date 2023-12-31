@@ -25,12 +25,11 @@ module Cecil
     def evaluate! = self
 
     # @!visibility private
-    # TODO: we do need this, right? the tests don't seem to think so
     def replace_child(...) = nil
 
     # Provide values for placeholders and/or nest a block of code. When
-    # called, will replace this node with a {CodeLiteral} or
-    # {CodeLiteraleWithChildrenNode}
+    # called, will replace this node with a {Literal} or
+    # {LiteraleWithChildrenNode}
     #
     # Placeholder values can be given as positional arguments or named values,
     # but not both.
@@ -239,11 +238,11 @@ module Cecil
     # Node with source code, no placeholders, and no child nodes.
     #
     # Will not accept any placeholder values, but can receive children via
-    # {#with}/{#[]} and will replace itself with a {CodeLiteralWithChildren}.
-    class CodeLiteral < Node
+    # {#with}/{#[]} and will replace itself with a {LiteralWithChildren}.
+    class Literal < Node
       # @!visibility private
       def self.build(...)
-        klass = block_given? ? CodeLiteralWithChildren : self
+        klass = block_given? ? LiteralWithChildren : self
         klass.new(...)
       end
 
@@ -271,17 +270,14 @@ module Cecil
 
       # @!visibility private
       alias stringify stringify_src
-
-      # TODO: do we need to define #<< ?
     end
 
     # Node with source code, no placeholders, and child nodes
-    class CodeLiteralWithChildren < CodeLiteral
+    class LiteralWithChildren < Literal
       include AsParent
 
       # @!visibility private
       def closers
-        # TODO: test the @src.strip
         closing_brackets = Text.closers(@src.strip, builder.syntax.block_ending_pairs).to_a
 
         Text.reindent("#{closing_brackets.join.strip}\n", depth, builder.syntax.indent_chars)
@@ -300,7 +296,7 @@ module Cecil
       # @return [Node]
       def <<(string_or_node)
         case string_or_node
-        in CodeLiteral then nil # TODO: test this... where should << be defined?
+        in Literal then nil
         in String then builder.src(string_or_node)
         end
       end
@@ -310,7 +306,7 @@ module Cecil
     # Created with backticks or {BlockContext#src `` #`(code_str) ``}
     #
     # When {#with}/{#[]} is called on the node, it will replace itself with a
-    # {CodeLiteral} or {CodeLiteralWithChildren}
+    # {Literal} or {LiteralWithChildren}
     class Template < Node
       # @!visibility private
       def self.build(src:, builder:, **)
@@ -319,7 +315,7 @@ module Cecil
         if placeholders.any?
           new(src:, placeholders:, **)
         else
-          CodeLiteral.new(src:, **)
+          Literal.new(src:, **)
         end
       end
 
@@ -344,7 +340,7 @@ module Cecil
             raise "Method expects to be called with either named arguments or positional arguments but not both"
           end
 
-        CodeLiteral
+        Literal
           .build(src:, parent:, &)
           .tap { builder.replace_node self, _1 }
       end
