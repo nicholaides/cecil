@@ -112,7 +112,7 @@ module Cecil
     #
     #   @param [#hash] key Any hashable object to identify the content
     #   @return [Array<Node::Detached>] A node of stored content for the given key
-    #   @throw [Exception] Throws an execption if there is no content stored at the given key
+    #   @raise [Exception] Throws an execption if there is no content stored at the given key
     def_delegator :@builder, :content_for!
   end
 end

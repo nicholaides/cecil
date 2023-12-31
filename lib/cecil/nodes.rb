@@ -29,7 +29,7 @@ module Cecil
 
     # Provide values for placeholders and/or nest a block of code. When
     # called, will replace this node with a {Literal} or
-    # {LiteraleWithChildrenNode}
+    # {LiteralWithChildren}
     #
     # Placeholder values can be given as positional arguments or named values,
     # but not both.

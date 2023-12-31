@@ -41,7 +41,7 @@ module Cecil
     #
     # @param template [String]
     # @param placeholders [Array<Placeholder>]
-    # @param options [Array<#to_s>]
+    # @param args [Array<#to_s>]
     # @return [String] `template`, except with placeholders replaced with
     #   provided values
     def interpolate_positional(template, placeholders, args)
