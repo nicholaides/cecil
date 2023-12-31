@@ -141,10 +141,6 @@ module Cecil
         with(...)
       end
 
-      # Alias of {#with}
-      # @return [AbstractNode]
-      def call(...) = with(...)
-
       # Append a string or node to the node, without making a new line.
       #
       # @param string_or_node [String, AbstractNode]

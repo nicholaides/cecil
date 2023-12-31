@@ -75,10 +75,10 @@ module Cecil
     #
     #     content_for :functions do
     #       `function $fnName() {`[fn_name] do
-    #         `api.call('$fnName', $fn_arg)`[fn_name, fn_arg.to_json]
+    #         `api.fetch('$fnName', $fn_arg)`[fn_name, fn_arg.to_json]
     #       end
     #       `function undo$fnName() {`[fn_name] do
-    #         `api.call('undo$fnName', $fn_arg)`[fn_name, fn_arg.to_json]
+    #         `api.fetch('undo$fnName', $fn_arg)`[fn_name, fn_arg.to_json]
     #       end
     #     end
     #

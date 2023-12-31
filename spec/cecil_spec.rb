@@ -5,11 +5,11 @@ RSpec.describe Cecil do
 
   require "stringio"
 
-  describe ".call" do
+  describe ".generate" do
     it "writes the code to an IO object" do
       buffer = StringIO.new
 
-      Cecil::Code.call buffer do
+      Cecil::Code.generate buffer do
         `echo NO`
       end
 
@@ -19,7 +19,7 @@ RSpec.describe Cecil do
     it "writes the code to a string" do
       buffer = ""
 
-      Cecil::Code.call buffer do
+      Cecil::Code.generate buffer do
         `echo NO`
       end
 
@@ -27,7 +27,7 @@ RSpec.describe Cecil do
     end
 
     it "returns the given buffer/io/string" do
-      expect(Cecil::Code.call("") do
+      expect(Cecil::Code.generate("") do
         `echo NO`
       end).to eq "echo NO\n"
     end

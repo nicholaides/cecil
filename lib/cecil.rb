@@ -46,7 +46,6 @@ module Cecil
           .lstrip
           .then { out << _1 }
       end
-      alias call generate
 
       # Generates output and returns it as a string
       #
@@ -58,9 +57,7 @@ module Cecil
       #     `function helloWorld() {}`
       #   end
       #   puts my_code
-      def generate_string(&)
-        generate("", &)
-      end
+      def generate_string(&) = generate("", &)
 
       # @overload helpers(&)
       #   Define helper methods for use inside the Cecil block. Each subclass
