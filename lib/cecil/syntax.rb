@@ -1,3 +1,4 @@
+require_relative "placeholder"
 require_relative "text"
 
 module Cecil
@@ -181,7 +182,7 @@ module Cecil
     def scan_for_placeholders(src)
       Text.scan_for_re_matches(src, placeholder_re)
           .map do |match|
-            Cecil::Placeholder.new(match[:placeholder], *match.offset(0))
+            Placeholder.new(match[:placeholder], *match.offset(0))
           end
     end
   end
