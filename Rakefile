@@ -9,7 +9,12 @@ require "rubocop/rake_task"
 
 RuboCop::RakeTask.new
 
-task default: %i[spec rubocop]
-
 require "rake/clean"
 CLEAN.include ".yardoc/"
+
+require "yard"
+YARD::Rake::YardocTask.new do |t|
+  t.options = %w[--no-cache --fail-on-warning]
+end
+
+task default: %i[spec yard rubocop]
