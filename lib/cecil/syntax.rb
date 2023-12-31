@@ -7,6 +7,9 @@ module Cecil
   # To define a class for your own language, subclass {Code} and override
   # methods of this class.
   class Syntax
+    module Helpers
+    end
+
     # Returns the string to use for each level of indentation. Default is 4 spaces.
     #
     # To turn off indentation, override this method to return an empty string.

@@ -30,7 +30,7 @@ module Cecil
     def generate(out = $stdout, &)
       syntax = new
       builder = Builder.new(syntax)
-      BlockContext.new(builder, syntax.helpers).instance_exec(&)
+      BlockContext.new(builder, syntax.class::Helpers).instance_exec(&)
       builder
         .root
         .evaluate!
@@ -59,34 +59,5 @@ module Cecil
   # To define your own syntax, subclass {Code} and override methods defined in {Syntax}.
   class Code < Syntax
     extend Generator
-
-    # @overload helpers(&)
-    #   Define helper methods for use inside the Cecil block. Each subclass
-    #   of {Code} has its own helpers module.
-    #
-    #   E.g.
-    #
-    #       class HTML < Cecil::Code
-    #         helpers do
-    #           def h(str) = CGI.escape(str)
-    #         end
-    #       end
-    #
-    #       page = "My Geocities Site ~~< >~~"
-    #       HTML.generate_string do
-    #         `<title>$page</title>`[h page]
-    #       end
-    #
-    #   @yield If given a block, calls the block inside a new Module and returns the module.
-    #
-    # @overload helpers
-    #   @return [Module] the module with the helpers defined by calling .helpers with a block
-    def self.helpers(&)
-      @helpers ||= Module.new
-      @helpers.module_exec(&) if block_given?
-      @helpers
-    end
-
-    def helpers = self.class.helpers
   end
 end

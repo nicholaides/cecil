@@ -6,7 +6,9 @@ module Cecil
     # Use 2 characters for indentation
     def indent_chars = "  "
 
-    helpers do
+    module Helpers
+      include Code::Helpers
+
       # "types". Accepts one or a list of types and returns their union.
       #
       # E.g. `t ["undefined", "object"]` returns `"undefined | object"
