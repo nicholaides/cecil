@@ -3,46 +3,6 @@ RSpec.describe Cecil do
     expect(Cecil::VERSION).not_to be nil
   end
 
-  require "stringio"
-
-  describe ".generate" do
-    it "writes the code to an IO object" do
-      buffer = StringIO.new
-
-      Cecil::Code.generate buffer do
-        `echo NO`
-      end
-
-      expect(buffer.string).to eq "echo NO\n"
-    end
-
-    it "writes the code to a string" do
-      buffer = ""
-
-      Cecil::Code.generate buffer do
-        `echo NO`
-      end
-
-      expect(buffer).to eq "echo NO\n"
-    end
-
-    it "returns the given buffer/io/string" do
-      expect(Cecil::Code.generate("") do
-        `echo NO`
-      end).to eq "echo NO\n"
-    end
-
-    it "defaults to writing to stdout"
-  end
-
-  describe ".generate_string" do
-    it "returns the generated code" do
-      expect(Cecil::Code.generate_string do
-        `echo NO`
-      end).to eq "echo NO\n"
-    end
-  end
-
   describe "nesting generation calls" do
     it "can generate in sequence" do
       inner = Cecil::Code.generate_string do
@@ -141,9 +101,6 @@ RSpec.describe Cecil do
   def blank?(str) = str =~ /^\s*$/
 
   describe "outputting code" do
-    def expect_code(...) = expect(code(...))
-    def code(...) = Cecil::Code.generate_string(...)
-
     it "outputs code" do
       expect_code do
         `echo NO`
@@ -202,11 +159,11 @@ RSpec.describe Cecil do
       end
 
       it "errors on positional and named placeholders" do
-        expect do
-          code do
-            `line { $code } [ $another ]`["my code", another: "more code"]
-          end
-        end.to raise_error(/expects/i)
+        cecil do
+          `line { $code } [ $another ]`["my code", another: "more code"]
+        end
+
+        raises(/expects/i)
       end
 
       it "errors on unmatched placeholders given positional arguments" do
@@ -359,13 +316,15 @@ RSpec.describe Cecil do
       end
       describe "indentation" do
         it "indents blocks" do
-          expect_code do
+          cecil do
             `start outer`
             `inner {`[] do
               `content`
             end
             `end outer`
-          end.to eq <<~CODE
+          end
+
+          outputs <<~CODE
             start outer
             inner {
                 content
