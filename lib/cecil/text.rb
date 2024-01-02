@@ -5,10 +5,10 @@ module Cecil
 
     # Scan a string for matches on a Regexp and return each MatchObject
     #
-    # @param src [String] the string to scan
+    # @param str [String] the string to scan
     # @param regexp [Regexp] the regexp to scan with
     # @return [Array<MatchData>] The MatchData objects for each instance of the regexp matched in the string
-    def scan_for_re_matches(src, regexp) = src.to_enum(:scan, regexp).map { Regexp.last_match }
+    def scan_for_re_matches(str, regexp) = str.to_enum(:scan, regexp).map { Regexp.last_match }
 
     # Reindent `src` string to the level specified by `depth`. `indent_chars` is
     # used to determine the current level of indentation as well as add more

@@ -1,4 +1,4 @@
-RSpec.describe Cecil do
+RSpec.describe Cecil::Code do
   require "stringio"
 
   describe ".generate" do
