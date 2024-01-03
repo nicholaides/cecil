@@ -11,7 +11,7 @@ module Cecil
     def scan_for_re_matches(str, regexp) = str.to_enum(:scan, regexp).map { Regexp.last_match }
 
     # Reindent `src` string to the level specified by `depth`. `indent_chars` is
-    # used to determine the current level of indentation as well as add more
+    # used only the current level of indentation as well as add more
     # indentation.
     #
     # @param src [String]
@@ -19,21 +19,39 @@ module Cecil
     # @param indent_chars [String]
     def reindent(src, depth, indent_chars)
       lines = src.lines
-      lines.shift if lines.first == "\n"
+
+      # e.g. this situation:
+      # `
+      #   my content
+      #   ...
+      lines.shift if lines.first in "\n" | "\r\n"
 
       indented_lines =
-        if lines.first =~ /^\S/
-          lines.drop(1)
-        else
-          lines.dup
+        if lines.size == 1
+          []
+        elsif lines.first =~ /^\S/ # e.g. `content...
+          not_first_lines = lines.drop(1)
+          [*not_first_lines.grep(/\S/), *not_first_lines.last]
+        else # e.g. `  content...
+          lines.grep(/\S/)
         end
 
-      min_indent = indented_lines
-                   .grep(/\S/)
-                   .map { _1.match(/^[ \t]*/)[0].size }
-                   .min || 0
+      min_indent =
+        indented_lines
+        .map { _1.match(/^[ \t]*/)[0].size }
+        .min || 0
 
-      lines = lines.map { _1.sub(/^[ \t]{0,#{min_indent}}/, indent_chars * depth) }
+      new_indentation = indent_chars * depth
+      reindent_line_re = /^[ \t]{0,#{min_indent}}/
+
+      lines = lines.map do |line|
+        if line =~ /\S/
+          line.sub(reindent_line_re, new_indentation)
+        else
+          line.sub(/^[ \t]*/, "")
+        end
+      end
+
       lines.join
     end
 

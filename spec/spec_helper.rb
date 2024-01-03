@@ -1,5 +1,5 @@
 require "cecil"
-require_relative "helpers"
+require_relative "helpers/cecil_helpers"
 
 RSpec.configure do |config|
   # Enable flags like --only-failures and --next-failure
@@ -14,5 +14,5 @@ RSpec.configure do |config|
 
   config.filter_run_when_matching :focus
 
-  config.include Helpers
+  config.include CecilHelpers
 end

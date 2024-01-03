@@ -490,7 +490,7 @@ RSpec.describe Cecil do
           func {
               do stuff
           }
-          -> call
+           -> call
         CODE
       end
 
@@ -504,7 +504,7 @@ RSpec.describe Cecil do
           func {
               do stuff
           }
-          -> call
+           -> call
         CODE
       end
     end
