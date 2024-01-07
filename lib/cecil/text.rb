@@ -10,7 +10,43 @@ module Cecil
     # @return [Array<MatchData>] The MatchData objects for each instance of the regexp matched in the string
     def scan_for_re_matches(str, regexp) = str.to_enum(:scan, regexp).map { Regexp.last_match }
 
-    def intentation_level(str) = str.index(/[^\t ]/) || str.length
+    def intentation_level_of_line(str) = str.index(/[^\t ]/) || str.length
+
+    def indent_levels(lines) = lines.map { intentation_level_of_line(_1) }
+
+    def indentation_basic(src) = indent_levels(src.lines.grep(/\S/)).min
+
+    def indentation_when_starts_and_stops_with_content(src)
+      levels = indent_levels(src.lines.drop(1).grep(/\S/))
+
+      raise "Ambiguous, cannot reindent:\n#{src}" if levels.last == levels.max
+
+      levels.min
+    end
+
+    def indentation_when_starts_with_content(src)
+      src.lines => _first, *middle, last
+
+      indent_levels([*middle.grep(/\S/), last]).min
+    end
+
+    SINGLE_LINE = /\A.*\n?\z/
+    STARTS_WITH_CONTENT = /\A\S/ # e.g. `content ...
+    ENDS_WITH_CONTENT = /.*\S.*\n?\z/
+    def indentation_level(src)
+      case src
+      when SINGLE_LINE # single line
+        0
+      when STARTS_WITH_CONTENT
+        if src =~ ENDS_WITH_CONTENT
+          indentation_when_starts_and_stops_with_content(src)
+        else
+          indentation_when_starts_with_content(src)
+        end
+      else
+        indentation_basic(src)
+      end
+    end
 
     # Reindent `src` string to the level specified by `depth`. `indent_chars` is
     # used only the current level of indentation as well as add more
@@ -20,38 +56,19 @@ module Cecil
     # @param depth [Integer]
     # @param indent_chars [String]
     def reindent(src, depth, indent_chars)
-      lines = src.lines
-
-      # e.g. this situation:
-      # `
-      #   my content
-      #   ...
-      lines.shift if lines.first in "\n" | "\r\n"
-
-      indented_lines =
-        if lines.size == 1
-          []
-        elsif lines.first =~ /^\S/ # e.g. `content...
-          not_first_lines = lines.drop(1)
-          last_line_of_multi_starting_with_content = not_first_lines.last
-
-          [*not_first_lines.grep(/\S/), *last_line_of_multi_starting_with_content]
-        else # e.g. `  content...
-          lines.grep(/\S/)
-        end
-
-      indentation_levels = indented_lines.map { intentation_level(_1) }
-
-      min_indent = indentation_levels.min || 0
-      max_indent = indentation_levels.max || 0
-
-      last_line = last_line_of_multi_starting_with_content
-      raise "Ambiguous, cannot reindent:\n#{src}" if last_line =~ /\S/ && intentation_level(last_line) == max_indent
+      # Turn
+      # "\n" +
+      # "  line 1\n" +
+      # "    line 2\n"
+      # into
+      # "  line 1\n" +
+      # "    line 2\n"
+      src = src.sub(/\A\R/m, "")
 
       new_indentation = indent_chars * depth
-      reindent_line_re = /^[ \t]{0,#{min_indent}}/
+      reindent_line_re = /^[ \t]{0,#{indentation_level(src)}}/
 
-      lines = lines.map do |line|
+      lines = src.lines.map do |line|
         if line =~ /\S/
           line.sub(reindent_line_re, new_indentation)
         else

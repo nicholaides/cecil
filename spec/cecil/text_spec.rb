@@ -113,6 +113,15 @@ RSpec.describe Cecil::Text do
        |def ruby_fn
        |end"
 
+    reindents \
+      "|def ruby_fn
+       |end
+       <"
+
+    reindents \
+      "|const x
+       <"
+
     reindents "|one line"
 
     reindents "|  one line"
