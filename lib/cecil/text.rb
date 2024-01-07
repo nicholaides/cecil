@@ -10,6 +10,8 @@ module Cecil
     # @return [Array<MatchData>] The MatchData objects for each instance of the regexp matched in the string
     def scan_for_re_matches(str, regexp) = str.to_enum(:scan, regexp).map { Regexp.last_match }
 
+    def intentation_level(str) = str.index(/[^\t ]/) || str.length
+
     # Reindent `src` string to the level specified by `depth`. `indent_chars` is
     # used only the current level of indentation as well as add more
     # indentation.
@@ -31,15 +33,20 @@ module Cecil
           []
         elsif lines.first =~ /^\S/ # e.g. `content...
           not_first_lines = lines.drop(1)
-          [*not_first_lines.grep(/\S/), *not_first_lines.last]
+          last_line_of_multi_starting_with_content = not_first_lines.last
+
+          [*not_first_lines.grep(/\S/), *last_line_of_multi_starting_with_content]
         else # e.g. `  content...
           lines.grep(/\S/)
         end
 
-      min_indent =
-        indented_lines
-        .map { _1.match(/^[ \t]*/)[0].size }
-        .min || 0
+      indentation_levels = indented_lines.map { intentation_level(_1) }
+
+      min_indent = indentation_levels.min || 0
+      max_indent = indentation_levels.max || 0
+
+      last_line = last_line_of_multi_starting_with_content
+      raise "Ambiguous, cannot reindent:\n#{src}" if last_line =~ /\S/ && intentation_level(last_line) == max_indent
 
       new_indentation = indent_chars * depth
       reindent_line_re = /^[ \t]{0,#{min_indent}}/

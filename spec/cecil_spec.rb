@@ -526,4 +526,25 @@ RSpec.describe Cecil do
       CODE
     end
   end
+
+  describe "ambiguous indentation" do
+    it "errors when backticks are used with ambiguous indentation" do
+      # because, which should the be?
+      # ```
+      # def fn():
+      #   pass
+      # ```
+      # or
+      # ```
+      # def fn():
+      # pass
+      # ```
+      expect do
+        code do
+          `def fn():
+            pass`
+        end
+      end.to raise_error(/ambiguous/i)
+    end
+  end
 end

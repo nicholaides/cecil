@@ -25,6 +25,14 @@ RSpec.describe Cecil::Text do
       end
     end
 
+    def self.cannot_reindent(template_str)
+      it "cannot reindent \"#{template_str}\"" do
+        expect do
+          reindent(template_str, 3, "~~")
+        end.to raise_error(/ambiguous/i)
+      end
+    end
+
     reindents ">
       |func {
       |  level 1
@@ -39,44 +47,71 @@ RSpec.describe Cecil::Text do
     reindents ">
       |func():
       |  level 1
-    <"
+      <"
 
     reindents ">
       |func():
       |  level 1
 
-    <"
+      <"
 
     reindents ">
 
       |func():
       |  level 1
 
-    <"
+      <"
 
+    # unambiguous indentation because line 2 is indented more than line 3
     reindents \
       "|func() {
        |  level 1
        |}"
 
+    # unambiguous indentation because line 3, while only whitespace, tells us
+    # where the indentation is
     reindents \
       "|func():
        |  level 1
        <"
 
-    # In this situation, there's no way of knowing what the intention was. e.g. was it:
-    # `func():
-    # level1`
+    # In this situation, there's no way of knowing what the intention was. Should it be:
+    # ```
+    # def python_fn():
+    #   pass
+    # ```
     #   or
-    # `funct():
-    #   leve1`?
-    # We should probably throw an error to prevent unintentional mistakes
-    # e.g.:
-    # `func():
-    #   level 1`
-    reindents \
-      "|func():
-       |level 1"
+    # ````
+    # def python_fn():
+    # pass
+    # ````
+    cannot_reindent \
+      "|def python_fn():
+       |  pass"
+
+    # unambiguous b/c line 2 ("  def python_fn():") starts with indentation
+    reindents ">
+      |def python_fn():
+      |  pass"
+
+    # In this situation, there's no way of knowing what the intention was. Should it be:
+    # ```
+    # def ruby_fn():
+    #   end
+    # ```
+    #   or
+    # ````
+    # def ruby_fn():
+    # end
+    # ````
+    cannot_reindent \
+      "|def ruby_fn
+       |end"
+
+    # unambiguous b/c line 2 ("  def ruby_fn") starts with indentation
+    reindents ">
+       |def ruby_fn
+       |end"
 
     reindents "|one line"
 
