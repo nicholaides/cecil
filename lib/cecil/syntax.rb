@@ -186,6 +186,6 @@ module Cecil
           end
     end
 
-    def handle_ambiguous_indentation = Indentation::RAISE_ON_AMBIGUOUS_INDENTATION
+    def handle_ambiguous_indentation = Indentation::Ambiguity.raise_error
   end
 end

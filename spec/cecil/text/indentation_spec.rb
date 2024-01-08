@@ -86,13 +86,13 @@ RSpec.describe Cecil::Indentation do
     reindents_ambiguous \
       "|def python_fn():
        |  pass",
-      handle_ambiguity: adjust_ambigious_indentation(2)
+      handle_ambiguity: described_class::Ambiguity.adjust_by(2)
 
     reindents_ambiguous \
       "|def python_fn():
        |  if True:
        |    pass",
-      handle_ambiguity: adjust_ambigious_indentation(2)
+      handle_ambiguity: described_class::Ambiguity.adjust_by(2)
 
     # unambiguous b/c line 2 ("  def python_fn():") starts with indentation
     reindents ">
@@ -112,7 +112,7 @@ RSpec.describe Cecil::Indentation do
     reindents_ambiguous \
       "|def ruby_fn
        |end",
-      handle_ambiguity: ignore_ambiguous_indentation
+      handle_ambiguity: described_class::Ambiguity.ignore
 
     # unambiguous b/c line 2 ("  def ruby_fn") starts with indentation
     reindents ">

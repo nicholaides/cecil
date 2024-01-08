@@ -8,10 +8,13 @@ module Cecil
 
     def level__basic(src) = levels(src.lines.grep(/\S/)).min
 
-    def adjust_ambigious_indentation(adjumstment) = ->(min_level:, **) { min_level - adjumstment }
-    def ignore_ambiguous_indentation = adjust_ambigious_indentation(0)
+    module Ambiguity
+      module_function
 
-    RAISE_ON_AMBIGUOUS_INDENTATION = ->(src:, **) { raise "Ambiguous, cannot reindent:\n#{src}" }
+      def adjust_by(adjumstment) = ->(min_level:, **) { min_level - adjumstment }
+      def ignore = adjust_by(0)
+      def raise_error = ->(src:, **) { raise "Ambiguous, cannot reindent:\n#{src}" }
+    end
 
     def level__starts_and_stops_with_content(src, handle_ambiguity:)
       levels = levels(src.lines.drop(1).grep(/\S/))
@@ -54,10 +57,13 @@ module Cecil
     # used only the current level of indentation as well as add more
     # indentation.
     #
-    # @param src [String]
-    # @param depth [Integer]
-    # @param indent_chars [String]
-    def reindent(src, depth, indent_chars, handle_ambiguity: RAISE_ON_AMBIGUOUS_INDENTATION)
+    # Reindents the given source code string to the specified depth.
+    #
+    # @param src [String] The source code to reindent
+    # @param depth [Integer] The indentation level to reindent to
+    # @param indent_chars [String] The indentation characters to use
+    # @param handle_ambiguity [Proc] How to handle ambiguous indentation cases
+    def reindent(src, depth, indent_chars, handle_ambiguity: Ambiguity.raise_error)
       # Turn
       # "\n" +
       # "  line 1\n" +
