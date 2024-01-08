@@ -52,4 +52,24 @@ RSpec.describe Cecil::Text do
       expect(pair).to be_nil
     end
   end
+
+  describe ".closers" do
+    it "returns the closers for the given string" do
+      closers = closers("abc", { "b" => "B", "c" => "C" }).to_a
+      expect(closers).to eq %w[C B]
+    end
+
+    it "returns the closers for the given string, and accepts empty string" do
+      closers = closers("abcbb", { "b" => "B", "c" => "C" }).to_a
+      expect(closers).to eq %w[B B C B]
+    end
+
+    it "yields the closers when given a block" do
+      endings = []
+      closers("abcbb", { "b" => "B", "c" => "C" }) do |closer|
+        endings << closer
+      end
+      expect(endings).to eq %w[B B C B]
+    end
+  end
 end
