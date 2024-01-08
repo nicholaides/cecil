@@ -7,6 +7,8 @@ module Cecil
       # Use 2 characters for indentation
       def indent_chars = "  "
 
+      def handle_ambiguous_indentation = Text.ignore_ambiguous_indentation
+
       module Helpers
         include Code::Helpers
 

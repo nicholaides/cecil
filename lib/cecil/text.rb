@@ -16,12 +16,21 @@ module Cecil
 
     def indentation_basic(src) = indent_levels(src.lines.grep(/\S/)).min
 
-    def indentation_when_starts_and_stops_with_content(src)
+    def adjust_ambigious_indentation(adjumstment) = ->(min_level:, **) { min_level - adjumstment }
+    def ignore_ambiguous_indentation = adjust_ambigious_indentation(0)
+
+    RAISE_ON_AMBIGUOUS_INDENTATION = ->(src:, **) { raise "Ambiguous, cannot reindent:\n#{src}" }
+
+    def indentation_when_starts_and_stops_with_content(src, handle_ambiguity:)
       levels = indent_levels(src.lines.drop(1).grep(/\S/))
 
-      raise "Ambiguous, cannot reindent:\n#{src}" if levels.last == levels.max
+      min_level = levels.min
 
-      levels.min
+      if levels.last == levels.max && ambiguous_level = handle_ambiguity.call(src:, min_level:)
+        return ambiguous_level
+      end
+
+      min_level
     end
 
     def indentation_when_starts_with_content(src)
@@ -33,13 +42,14 @@ module Cecil
     SINGLE_LINE = /\A.*\n?\z/
     STARTS_WITH_CONTENT = /\A\S/ # e.g. `content ...
     ENDS_WITH_CONTENT = /.*\S.*\n?\z/
-    def indentation_level(src)
+
+    def indentation_level(src, handle_ambiguity:)
       case src
-      when SINGLE_LINE # single line
+      when SINGLE_LINE
         0
       when STARTS_WITH_CONTENT
         if src =~ ENDS_WITH_CONTENT
-          indentation_when_starts_and_stops_with_content(src)
+          indentation_when_starts_and_stops_with_content(src, handle_ambiguity:)
         else
           indentation_when_starts_with_content(src)
         end
@@ -55,7 +65,7 @@ module Cecil
     # @param src [String]
     # @param depth [Integer]
     # @param indent_chars [String]
-    def reindent(src, depth, indent_chars)
+    def reindent(src, depth, indent_chars, handle_ambiguity: RAISE_ON_AMBIGUOUS_INDENTATION)
       # Turn
       # "\n" +
       # "  line 1\n" +
@@ -66,7 +76,7 @@ module Cecil
       src = src.sub(/\A\R/m, "")
 
       new_indentation = indent_chars * depth
-      reindent_line_re = /^[ \t]{0,#{indentation_level(src)}}/
+      reindent_line_re = /^[ \t]{0,#{indentation_level(src, handle_ambiguity:)}}/
 
       lines = src.lines.map do |line|
         if line =~ /\S/

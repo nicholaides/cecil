@@ -185,5 +185,7 @@ module Cecil
             Placeholder.new(match[:placeholder], *match.offset(0))
           end
     end
+
+    def handle_ambiguous_indentation = Text::RAISE_ON_AMBIGUOUS_INDENTATION
   end
 end

@@ -12,24 +12,28 @@ RSpec.describe Cecil::Text do
   end
 
   describe ".reindent" do
-    def self.reindents(template_str)
-      describe "reindents \"#{template_str}\"" do
+    def self.reindents(template_str, desc_more = " ", **)
+      describe "given#{desc_more}\"#{template_str}\"" do
         template = IndentationTemplate.new(template_str)
-        (0...3).each do |level| # rubocop:disable Style/EachForSimpleLoop
-          specify "to level #{level}" do
-            actual = reindent(template.as_input, level, "~~")
+        [0, 1, 2, 3, 10, 20].each do |level|
+          it "reindents to level #{level}" do
+            actual = reindent(template.as_input, level, "~~", **)
             expected = template.indented "~~" * level
             expect(actual).to eq expected
           end
         end
+
+        yield(self) if block_given?
       end
     end
 
-    def self.cannot_reindent(template_str)
-      it "cannot reindent \"#{template_str}\"" do
-        expect do
-          reindent(template_str, 3, "~~")
-        end.to raise_error(/ambiguous/i)
+    def self.reindents_ambiguous(template_str, **)
+      reindents(template_str, " ambigious\n      ", **) do |context|
+        context.it "cannot reindent \"#{template_str}\"" do
+          expect do
+            reindent(template_str, 3, "~~")
+          end.to raise_error(/ambiguous/i)
+        end
       end
     end
 
@@ -85,9 +89,16 @@ RSpec.describe Cecil::Text do
     # def python_fn():
     # pass
     # ````
-    cannot_reindent \
+    reindents_ambiguous \
       "|def python_fn():
-       |  pass"
+       |  pass",
+      handle_ambiguity: Cecil::Text.adjust_ambigious_indentation(2)
+
+    reindents_ambiguous \
+      "|def python_fn():
+       |  if True:
+       |    pass",
+      handle_ambiguity: Cecil::Text.adjust_ambigious_indentation(2)
 
     # unambiguous b/c line 2 ("  def python_fn():") starts with indentation
     reindents ">
@@ -104,9 +115,10 @@ RSpec.describe Cecil::Text do
     # def ruby_fn():
     # end
     # ````
-    cannot_reindent \
+    reindents_ambiguous \
       "|def ruby_fn
-       |end"
+       |end",
+      handle_ambiguity: Cecil::Text.ignore_ambiguous_indentation
 
     # unambiguous b/c line 2 ("  def ruby_fn") starts with indentation
     reindents ">
