@@ -1,4 +1,5 @@
 require_relative "../helpers/reindent_helpers"
+require "cecil/placeholder"
 
 RSpec.describe Cecil::Text do
   include Cecil::Text
@@ -70,6 +71,27 @@ RSpec.describe Cecil::Text do
         endings << closer
       end
       expect(endings).to eq %w[B B C B]
+    end
+  end
+
+  describe ".replace" do
+    let(:template) { "class CLASS extends PARENT export CLASS" }
+    let(:placeholders) do
+      [
+        Cecil::Placeholder.new("CLASS", 6, 11),
+        Cecil::Placeholder.new("PARENT", 20, 26),
+        Cecil::Placeholder.new("CLASS", 34, 39)
+      ]
+    end
+
+    it "replaces the template string with the values of the placeholders" do
+      result = replace(template, placeholders, { CLASS: "MyClass", PARENT: "my_parent" })
+      expect(result).to eq "class MyClass extends my_parent export MyClass"
+    end
+
+    it "accepts strings as keys" do
+      result = replace(template, placeholders, { "CLASS" => "MyClass", "PARENT" => "my_parent" })
+      expect(result).to eq "class MyClass extends my_parent export MyClass"
     end
   end
 end

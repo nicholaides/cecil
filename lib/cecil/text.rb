@@ -14,28 +14,28 @@ module Cecil
     #
     # @param template [String]
     # @param placeholders [Array<Placeholder>]
-    # @param args [Array<#to_s>]
+    # @param values [Array<#to_s>]
     # @return [String] `template`, except with placeholders replaced with
     #   provided values
-    def interpolate_positional(template, placeholders, args)
+    def interpolate_positional(template, placeholders, values)
       match_idents = placeholders.to_set(&:ident)
 
-      if match_idents.size != args.size
-        raise "Mismatch between number of placeholders (#{placeholders.size}) and given values (#{args.size})"
+      if match_idents.size != values.size
+        raise "Mismatch between number of placeholders (#{placeholders.size}) and given values (#{values.size})"
       end
 
-      replace(template, placeholders, match_idents.zip(args).to_h)
+      replace(template, placeholders, match_idents.zip(values).to_h)
     end
 
     # Interpolate named placeholder values into a string
     #
     # @param template [String]
     # @param placeholders [Array<Placeholder>]
-    # @param options [Hash{#to_s=>#to_s}]
+    # @param idents_to_values [Hash{#to_s=>#to_s}]
     # @return [String] `template`, except with placeholders replaced with
     #   provided values
-    def interpolate_named(template, placeholders, options)
-      values_idents = options.keys.to_set(&:to_s)
+    def interpolate_named(template, placeholders, idents_to_values)
+      values_idents = idents_to_values.keys.to_set(&:to_s)
       match_idents = placeholders.to_set(&:ident)
 
       if match_idents != values_idents
@@ -48,18 +48,18 @@ module Cecil
         raise message
       end
 
-      replace(template, placeholders, options)
+      replace(template, placeholders, idents_to_values)
     end
 
     # Replace placeholders in the string with provided values
     #
     # @param template [String]
     # @param placeholders [Array<Placeholder>]
-    # @param placeholder_inputs [Hash{#to_s=>#to_s}]
+    # @param idents_to_values [Hash{#to_s=>#to_s}]
     # @return [String] `template`, except with placeholders replaced with
     #   provided values
-    def replace(template, placeholders, placeholder_inputs)
-      values = placeholder_inputs.transform_keys(&:to_s)
+    def replace(template, placeholders, idents_to_values)
+      values = idents_to_values.transform_keys(&:to_s)
 
       template.dup.tap do |new_src|
         placeholders.reverse.each do |placeholder|
