@@ -1,5 +1,5 @@
 require_relative "placeholder"
-require_relative "text"
+require_relative "indentation"
 
 module Cecil
   # Provides default behavior for formatting and manipulating strings of code.
@@ -186,6 +186,6 @@ module Cecil
           end
     end
 
-    def handle_ambiguous_indentation = Text::RAISE_ON_AMBIGUOUS_INDENTATION
+    def handle_ambiguous_indentation = Indentation::RAISE_ON_AMBIGUOUS_INDENTATION
   end
 end

@@ -1,5 +1,6 @@
 require_relative "content_for"
 require_relative "text"
+require_relative "indentation"
 
 module Cecil
   class Node
@@ -263,8 +264,8 @@ module Cecil
 
       # @!visibility private
       def stringify_src
-        src = Text.reindent(@src, depth, builder.syntax.indent_chars,
-                            handle_ambiguity: builder.syntax.handle_ambiguous_indentation)
+        src = Indentation.reindent(@src, depth, builder.syntax.indent_chars,
+                                   handle_ambiguity: builder.syntax.handle_ambiguous_indentation)
         src += "\n" unless src.end_with?("\n")
         src
       end
@@ -281,8 +282,8 @@ module Cecil
       def closers
         closing_brackets = Text.closers(@src.strip, builder.syntax.block_ending_pairs).to_a
 
-        Text.reindent("#{closing_brackets.join.strip}\n", depth, builder.syntax.indent_chars,
-                      handle_ambiguity: builder.syntax.handle_ambiguous_indentation)
+        Indentation.reindent("#{closing_brackets.join.strip}\n", depth, builder.syntax.indent_chars,
+                             handle_ambiguity: builder.syntax.handle_ambiguous_indentation)
       end
 
       # @!visibility private
