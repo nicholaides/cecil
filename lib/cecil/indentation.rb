@@ -62,7 +62,10 @@ module Cecil
     # @param src [String] The source code to reindent
     # @param depth [Integer] The indentation level to reindent to
     # @param indent_chars [String] The indentation characters to use
-    # @param handle_ambiguity [Proc] How to handle ambiguous indentation cases
+    # @param handle_ambiguity [Proc] How to handle ambiguous indentation cases.
+    #   Defaults to `Ambiguity.raise_error`, but you may also like
+    #   `Ambiguity.ignore` if your syntax doesn't have signigicant whitesapce, or
+    #   `Ambiguity.adjust_by(n)` if it does.
     def reindent(src, depth, indent_chars, handle_ambiguity: Ambiguity.raise_error)
       # Turn
       # "\n" +
