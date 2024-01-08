@@ -41,7 +41,7 @@ module Cecil
 
     SINGLE_LINE = /\A.*\n?\z/
     STARTS_WITH_CONTENT = /\A\S/ # e.g. `content ...
-    ENDS_WITH_CONTENT = /.*\S.*\n?\z/
+    ENDS_WITH_CONTENT = /.*\S.*\z/ # e.g. "..\n content "
 
     def indentation_level(src, handle_ambiguity:)
       case src
