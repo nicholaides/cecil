@@ -22,7 +22,7 @@ module Cecil
         #
         # E.g. `l ["Websocket", "Array"]` returns "Websocket, Array"
         # E.g. `l "Websocket"` returns "Websocket"
-        def l(items) = Array(items).join(", ")
+        def l(items) = Array(items).compact.join(", ")
 
         # "json". Returns the JSON representation of an object.
         #

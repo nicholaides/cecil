@@ -31,12 +31,32 @@ RSpec.describe Cecil::Lang::TypeScript do
     end
 
     describe "l" do
-      it "joins items with ', '"
-      it "accepts single item"
+      it "joins items with ', '" do
+        expect(l(%w[a b c])).to eq "a, b, c"
+      end
+      it "converts inputs to strings" do
+        expect(l(["a", "b", :c])).to eq "a, b, c"
+      end
+      it "removes nils" do
+        expect(l(["a", nil, "b", :c])).to eq "a, b, c"
+      end
+      it "accepts single item" do
+        expect(l("a")).to eq "a"
+      end
+
+      it "returns empty string when given nil" do
+        expect(l(nil)).to eq ""
+      end
+
+      it "converts single items to string" do
+        expect(l(:c)).to eq "c"
+      end
     end
+
     describe "j" do
       it "converts input to JSON"
     end
+
     describe "s" do
       it "converts input to string without quotes"
       it "escapes double quotes"
