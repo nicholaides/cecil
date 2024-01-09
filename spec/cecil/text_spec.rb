@@ -115,10 +115,10 @@ RSpec.describe Cecil::Text do
       values = { class: "MyClass" }
       expect { interpolate_named(template, placeholders, values) }.to raise_error do |error|
         expect(error.message).to match(/mismatch/i)
-        expect(error.message).to include("parent")
-        expect(error.message).to include("generic")
+        expect(error.message).to include "parent"
+        expect(error.message).to include "generic"
 
-        expect(error.message).not_to include("class")
+        expect(error.message).not_to include "class"
       end
     end
 
@@ -128,9 +128,9 @@ RSpec.describe Cecil::Text do
         expect(error.message).to match(/mismatch/i)
         expect(error.message).to include("other")
 
-        expect(error.message).not_to include("parent")
-        expect(error.message).not_to include("generic")
-        expect(error.message).not_to include("class")
+        expect(error.message).not_to include "parent"
+        expect(error.message).not_to include "generic"
+        expect(error.message).not_to include "class"
       end
     end
 
@@ -158,8 +158,8 @@ RSpec.describe Cecil::Text do
       values = %w[MyClass my_parent]
       expect { interpolate_positional(template, placeholders, values) }.to raise_error do |error|
         expect(error.message).to match(/mismatch/i)
-        expect(error.message).to include("2")
-        expect(error.message).to include("3")
+        expect(error.message).to include "2"
+        expect(error.message).to include "3"
       end
     end
 
@@ -167,8 +167,8 @@ RSpec.describe Cecil::Text do
       values = %w[MyClass T my_parent other Values]
       expect { interpolate_positional(template, placeholders, values) }.to raise_error do |error|
         expect(error.message).to match(/mismatch/i)
-        expect(error.message).to include("3")
-        expect(error.message).to include("5")
+        expect(error.message).to include "3"
+        expect(error.message).to include "5"
       end
     end
   end
