@@ -35,6 +35,12 @@ module Cecil
     # @return [String] `template`, except with placeholders replaced with
     #   provided values
     def interpolate_named(template, placeholders, idents_to_values)
+      duplicated_keys = idents_to_values.keys.group_by(&:to_s).values.select { _1.size > 1 }
+      if duplicated_keys.any?
+        keys_list = duplicated_keys.map { "\n - #{_1.map(&:inspect).join(", ")}\n" }.join
+        raise "Duplicate placeholder value keys:#{keys_list}"
+      end
+
       values_idents = idents_to_values.keys.to_set(&:to_s)
       match_idents = placeholders.to_set(&:ident)
 

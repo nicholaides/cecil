@@ -133,6 +133,15 @@ RSpec.describe Cecil::Text do
         expect(error.message).not_to include("class")
       end
     end
+
+    it "errors when provided values use the same name after being converted to strings" do
+      values = { class: "MyClass", parent: "my_parent", generic: "T", "class" => "String Class" }
+      expect { interpolate_named(template, placeholders, values) }.to raise_error do |error|
+        expect(error.message).to match(/Duplicate/i)
+        expect(error.message).to include '"class"'
+        expect(error.message).to include ":class"
+      end
+    end
   end
 
   describe ".interpolate_positional" do
