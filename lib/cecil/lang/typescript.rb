@@ -16,7 +16,7 @@ module Cecil
         #
         # E.g. `t ["undefined", "object"]` returns `"undefined | object"
         # E.g. `t "undefined"` returns `"undefined"
-        def t(items) = Array(items).join(" | ")
+        def t(items) = Array(items).compact.join(" | ")
 
         # "list". Accepts one or a list of strings and returns them joined with ", "
         #
