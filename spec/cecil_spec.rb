@@ -548,3 +548,23 @@ RSpec.describe Cecil do
     end
   end
 end
+
+def object_method = "OBJECT METHOD"
+
+RSpec.describe Cecil do
+  describe "block scope" do
+    it "has access to methods defined in the global scope" do
+      expect(code do
+        src object_method
+      end.strip).to eq object_method
+    end
+
+    def receiver_method = "RECEIVER METHOD"
+
+    it "has access to methods defined in the block's scope" do
+      expect(code do
+        src receiver_method
+      end.strip).to eq receiver_method
+    end
+  end
+end

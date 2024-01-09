@@ -1,14 +1,21 @@
 require "forwardable"
+require "delegate"
 
 module Cecil
   # The BlockContext contains methods available to you inside a Cecil block.
   # This includes the methods below as well as any helpers passed in by your Syntax.
-  class BlockContext
+  class BlockContext < SimpleDelegator
     # @!visibility private
-    def initialize(builder, helpers)
+    def initialize(receiver, builder, helpers)
+      super(receiver)
       @builder = builder
       extend helpers
     end
+
+    # Override from Delegator.
+    # This allows methods in the global scope to be accessed, b/c otherwise they
+    # are private and Delegator won't pick them up
+    def target_respond_to?(target, method_name, _include_private) = super(target, method_name, true)
 
     extend Forwardable
 

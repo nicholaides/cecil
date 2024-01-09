@@ -11,7 +11,7 @@ module Cecil
     extend Forwardable
     def_delegators :@content_for, :content_for, :content_for!, :content_for?
 
-    def initialize(syntax_class, &)
+    def initialize(syntax_class)
       @syntax = syntax_class.new
       @helpers = syntax_class::Helpers
 
@@ -25,9 +25,9 @@ module Cecil
       )
     end
 
-    def build(&)
-      @block_context = BlockContext.new(self, @helpers)
-      @block_context.instance_exec(&)
+    def build(&block)
+      @block_context = BlockContext.new(block.binding.receiver, self, @helpers)
+      @block_context.instance_exec(&block)
 
       root
         .evaluate!
