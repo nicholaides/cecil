@@ -481,7 +481,6 @@ RSpec.describe Cecil do
 
     describe "Code#<<" do
       it "can append Code to the generated code block" do
-        # TODO: should be "} -> call"
         expect_code do
           `func {`[] do
             `do stuff`
@@ -489,12 +488,10 @@ RSpec.describe Cecil do
         end.to eq <<~CODE
           func {
               do stuff
-          }
-           -> call
+          } -> call
         CODE
       end
 
-      # TODO: should be "} -> call"
       it "can append string to the generated code block" do
         expect_code do
           `func {`[] do
@@ -503,8 +500,19 @@ RSpec.describe Cecil do
         end.to eq <<~CODE
           func {
               do stuff
-          }
-           -> call
+          } -> call
+        CODE
+      end
+
+      it "can append a few things to the generated code block" do
+        expect_code do
+          `func {`[] do
+            `do stuff`
+          end << "1" << `2` << "3" << `4`
+        end.to eq <<~CODE
+          func {
+              do stuff
+          }1234
         CODE
       end
     end

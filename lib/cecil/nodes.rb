@@ -28,6 +28,17 @@ module Cecil
     # @!visibility private
     def replace_child(...) = nil
 
+    # @!visibility private
+    def reattach_to(new_parent)
+      parent.remove_child self
+
+      self.parent = new_parent
+      new_parent.add_child self
+    end
+
+    # @!visibility private
+    def replace_with(node) = builder.replace_node self, node
+
     # Provide values for placeholders and/or nest a block of code. When
     # called, will replace this node with a {Literal} or
     # {LiteralWithChildren}
@@ -126,7 +137,12 @@ module Cecil
     #   # test("quacks like a duck", () => {`
     #   #   expect(duck)
     #   # })
-    def <<(string_or_node) = raise "Not implemented" # rubocop:disable Lint/UnusedMethodArgument
+    def <<(string_or_node)
+      SameLineContainer.new(parent:).tap do |container|
+        container.add_child self
+        replace_with container
+      end << string_or_node
+    end
 
     module AsParent
       def self.included(base)
@@ -150,6 +166,8 @@ module Cecil
         children&.map!(&:evaluate!)
         super
       end
+
+      def remove_child(child) = children.delete(child)
 
       def replace_child(old_node, new_node)
         if idx = children.index(old_node)
@@ -212,6 +230,31 @@ module Cecil
       include AsParent
 
       def depth = parent.depth
+    end
+
+    class SameLineContainer < ContainerNode
+      def initialize(parent:)
+        super(parent:) do
+          yield self if block_given?
+        end
+      end
+
+      def stringify
+        *firsts, last = stringify_children
+        firsts_without_trailing_newline = firsts.map { _1.sub(/\R\z/m, "") }
+        [*firsts_without_trailing_newline, last].join
+      end
+
+      def <<(string_or_node)
+        case string_or_node
+        in Node => node
+          node.reattach_to self
+        in String => string
+          builder.build_node(self) { builder.src string }
+        end
+
+        self
+      end
     end
 
     # Node that will be inserted in another location in the document.
@@ -293,15 +336,6 @@ module Cecil
           *stringify_children,
           *closers
         ].join
-      end
-
-      # See {Node#<<}
-      # @return [Node]
-      def <<(string_or_node)
-        case string_or_node
-        in Literal then nil
-        in String then builder.src(string_or_node)
-        end
       end
     end
 

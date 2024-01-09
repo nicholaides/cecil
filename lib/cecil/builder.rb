@@ -41,8 +41,8 @@ module Cecil
     def current_node = @active_nodes.last || raise("No active Cecil node...")
     def replace_node(...) = current_node.replace_child(...)
 
-    def build_node(code)
-      @active_nodes.push code
+    def build_node(node)
+      @active_nodes.push node
       yield
     ensure
       @active_nodes.pop
