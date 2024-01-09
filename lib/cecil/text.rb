@@ -21,7 +21,7 @@ module Cecil
       match_idents = placeholders.to_set(&:ident)
 
       if match_idents.size != values.size
-        raise "Mismatch between number of placeholders (#{placeholders.size}) and given values (#{values.size})"
+        raise "Mismatch between number of placeholders (#{match_idents.size}) and given values (#{values.size})"
       end
 
       replace(template, placeholders, match_idents.zip(values).to_h)

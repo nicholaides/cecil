@@ -134,4 +134,33 @@ RSpec.describe Cecil::Text do
       end
     end
   end
+
+  describe ".interpolate_positional" do
+    let(:template) { "class $class<$generic> extends $parent export $class" }
+    let(:placeholders) { Cecil::Syntax.new.scan_for_placeholders(template) }
+
+    it "replaces placeholders" do
+      values = %w[MyClass T my_parent]
+      result = interpolate_positional(template, placeholders, values)
+      expect(result).to eq "class MyClass<T> extends my_parent export MyClass"
+    end
+
+    it "errors when it provides too few placeholders" do
+      values = %w[MyClass my_parent]
+      expect { interpolate_positional(template, placeholders, values) }.to raise_error do |error|
+        expect(error.message).to match(/mismatch/i)
+        expect(error.message).to include("2")
+        expect(error.message).to include("3")
+      end
+    end
+
+    it "errors when it provides too many placeholders" do
+      values = %w[MyClass T my_parent other Values]
+      expect { interpolate_positional(template, placeholders, values) }.to raise_error do |error|
+        expect(error.message).to match(/mismatch/i)
+        expect(error.message).to include("3")
+        expect(error.message).to include("5")
+      end
+    end
+  end
 end
