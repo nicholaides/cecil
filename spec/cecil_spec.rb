@@ -479,7 +479,7 @@ RSpec.describe Cecil do
       end
     end
 
-    describe "Code#<<" do
+    describe "Node#<<" do
       it "can append Code to the generated code block" do
         expect_code do
           `func {`[] do
@@ -513,6 +513,104 @@ RSpec.describe Cecil do
           func {
               do stuff
           }1234
+        CODE
+      end
+
+      it "can append a string to a literal node" do
+        expect_code do
+          `literal` << "String"
+        end.to eq <<~CODE
+          literalString
+        CODE
+      end
+
+      it "errors when appending a string to a template node" do
+        expect do
+          code do
+            `template $name ` << "String"
+          end
+        end.to raise_error(/mismatch/i)
+      end
+
+      it "errors when appending a literal node to a template node" do
+        expect do
+          code do
+            `template $name ` << `literal`
+          end
+        end.to raise_error(/mismatch/i)
+      end
+
+      it "can append a string to a deferred node" do
+        expect_code do
+          defer do
+            `literal`
+          end << "String"
+        end.to eq <<~CODE
+          literalString
+        CODE
+      end
+
+      it "can append a literal node to a deferred node" do
+        expect_code do
+          defer do
+            `literal`
+          end << `AnotherLiteral`
+        end.to eq <<~CODE
+          literalAnotherLiteral
+        CODE
+      end
+
+      it "cannot append when storing in content_for" do
+        expect do
+          code do
+            content_for(:imports) do
+              `literal`
+            end << "String"
+
+            content_for :imports
+          end
+        end.to raise_error(/undefined method `<<' for nil:NilClass/)
+      end
+
+      it "can append to a content_for node" do
+        expect_code do
+          content_for(:imports) do
+            `literal`
+          end
+
+          content_for(:imports) << "String"
+        end.to eq <<~CODE
+          literalString
+        CODE
+      end
+
+      it "can append a template node" do
+        expect_code do
+          `literal` << `Template $name`["Bob"]
+        end.to eq <<~CODE
+          literalTemplate Bob
+        CODE
+      end
+
+      it "can append a deferred node" do
+        expect_code do
+          `literal` << defer do
+            `DeferredLiteral`
+          end
+        end.to eq <<~CODE
+          literalDeferredLiteral
+        CODE
+      end
+
+      it "can append a content_for node" do
+        expect_code do
+          content_for(:imports) do
+            `literal`
+          end
+
+          `imports ` << content_for(:imports)
+        end.to eq <<~CODE
+          imports literal
         CODE
       end
     end

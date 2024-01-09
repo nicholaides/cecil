@@ -12,17 +12,16 @@ module Cecil
     def content_for(key, &)
       if block_given?
         @content[key] << @store.call(&)
+        nil
       elsif content_for?(key)
         content_for!(key)
       else
         @defer.call { content_for!(key) }
       end
-
-      nil
     end
 
     def content_for?(key) = @content.key?(key)
 
-    def content_for!(key) = @content.fetch(key).each(&@place)
+    def content_for!(key) = @place.call(@content.fetch(key))
   end
 end
