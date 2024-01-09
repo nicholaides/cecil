@@ -59,6 +59,20 @@ RSpec.describe Cecil::Lang::TypeScript do
     CODE
   end
 
+  it "closes multi-line comments" do
+    code = described_class.generate_string do
+      `/*`[] do
+        `comments`
+      end
+    end
+
+    expect(code).to eq <<~CODE
+      /*
+        comments
+      */
+    CODE
+  end
+
   it "does not indent ambigous lines" do
     code = described_class.generate_string do
       `function () {

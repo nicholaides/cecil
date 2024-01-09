@@ -9,6 +9,8 @@ module Cecil
 
       def handle_ambiguous_indentation = Indentation::Ambiguity.ignore
 
+      def block_ending_pairs = super.merge({ "/*" => "*/" })
+
       module Helpers
         include Code::Helpers
 
