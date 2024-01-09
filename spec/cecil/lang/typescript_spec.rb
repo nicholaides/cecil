@@ -15,7 +15,61 @@ RSpec.describe Cecil::Lang::TypeScript do
     CODE
   end
 
-  it "does not indent ambigous lines"
+  it "closes curly braces" do
+    code = described_class.generate_string do
+      `function $fn() {`["fibonacci"] do
+        `recurse()`
+      end
+    end
+
+    expect(code).to eq <<~CODE
+      function fibonacci() {
+        recurse()
+      }
+    CODE
+  end
+
+  it "closes parens" do
+    code = described_class.generate_string do
+      `myFunc(`[] do
+        `value`
+      end
+    end
+
+    expect(code).to eq <<~CODE
+      myFunc(
+        value
+      )
+    CODE
+  end
+
+  it "closes square brackets" do
+    code = described_class.generate_string do
+      `values = [`[] do
+        `v1,`
+        `v2`
+      end
+    end
+
+    expect(code).to eq <<~CODE
+      values = [
+        v1,
+        v2
+      ]
+    CODE
+  end
+
+  it "does not indent ambigous lines" do
+    code = described_class.generate_string do
+      `function () {
+      }`
+    end
+
+    expect(code).to eq <<~CODE
+      function () {
+      }
+    CODE
+  end
 
   describe Cecil::Lang::TypeScript::Helpers do
     include described_class

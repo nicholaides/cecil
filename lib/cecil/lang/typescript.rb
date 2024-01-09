@@ -4,7 +4,7 @@ require "json"
 module Cecil
   module Lang
     class TypeScript < Code
-      # Use 2 characters for indentation
+      # Use 2 spaces for indentation
       def indent_chars = "  "
 
       def handle_ambiguous_indentation = Indentation::Ambiguity.ignore
