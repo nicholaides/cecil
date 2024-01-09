@@ -94,4 +94,44 @@ RSpec.describe Cecil::Text do
       expect(result).to eq "class MyClass extends my_parent export MyClass"
     end
   end
+
+  describe ".interpolate_named" do
+    let(:template) { "class $class<$generic> extends $parent export $class" }
+    let(:placeholders) { Cecil::Syntax.new.scan_for_placeholders(template) }
+
+    it "replaces placeholders" do
+      values = { class: "MyClass", parent: "my_parent", generic: "T" }
+      result = interpolate_named(template, placeholders, values)
+      expect(result).to eq "class MyClass<T> extends my_parent export MyClass"
+    end
+
+    it "replaces placeholders, accepting string keys" do
+      values = { "class" => "MyClass", parent: "my_parent", generic: "T" }
+      result = interpolate_named(template, placeholders, values)
+      expect(result).to eq "class MyClass<T> extends my_parent export MyClass"
+    end
+
+    it "errors when it doesn't provide every placeholder" do
+      values = { class: "MyClass" }
+      expect { interpolate_named(template, placeholders, values) }.to raise_error do |error|
+        expect(error.message).to match(/mismatch/i)
+        expect(error.message).to include("parent")
+        expect(error.message).to include("generic")
+
+        expect(error.message).not_to include("class")
+      end
+    end
+
+    it "errors when it provides extra placeholders" do
+      values = { class: "MyClass", parent: "my_parent", generic: "T", other: "thing" }
+      expect { interpolate_named(template, placeholders, values) }.to raise_error do |error|
+        expect(error.message).to match(/mismatch/i)
+        expect(error.message).to include("other")
+
+        expect(error.message).not_to include("parent")
+        expect(error.message).not_to include("generic")
+        expect(error.message).not_to include("class")
+      end
+    end
+  end
 end
