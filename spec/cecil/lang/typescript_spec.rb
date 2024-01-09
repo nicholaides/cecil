@@ -1,7 +1,20 @@
 require "cecil/lang/typescript"
 
 RSpec.describe Cecil::Lang::TypeScript do
-  it "indents with 2 spaces"
+  it "indents with 2 spaces" do
+    code = described_class.generate_string do
+      `function $fn() {`["fibonacci"] do
+        `recurse()`
+      end
+    end
+
+    expect(code).to eq <<~CODE
+      function fibonacci() {
+        recurse()
+      }
+    CODE
+  end
+
   it "does not indent ambigous lines"
 
   describe Cecil::Lang::TypeScript::Helpers do
