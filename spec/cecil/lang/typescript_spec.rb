@@ -54,7 +54,9 @@ RSpec.describe Cecil::Lang::TypeScript do
     end
 
     describe "j" do
-      it "converts input to JSON"
+      it "converts input to JSON" do
+        expect(j({ myObj: "data" })).to eq '{"myObj":"data"}'
+      end
     end
 
     describe "s" do
