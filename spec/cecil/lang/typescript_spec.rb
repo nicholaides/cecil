@@ -60,9 +60,15 @@ RSpec.describe Cecil::Lang::TypeScript do
     end
 
     describe "s" do
-      it "converts input to string without quotes"
-      it "escapes double quotes"
-      it "escapes single quotes"
+      it "converts input to string without quotes" do
+        expect(s("hello world")).to eq "hello world"
+      end
+      it "escapes double quotes" do
+        expect(s('hello "world"')).to eq 'hello \\"world\\"'
+      end
+      it "escapes single quotes" do
+        expect(s("hello 'world'")).to eq "hello \\'world\\'"
+      end
     end
   end
 end

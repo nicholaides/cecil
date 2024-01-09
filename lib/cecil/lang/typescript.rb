@@ -48,7 +48,7 @@ module Cecil
         # Also useful to make the template communicate more clearly that a value
         # will be a string. E.g.
         # `const username = "$name"`[s name]
-        def s(item) = item.to_s.to_json[1...-1]
+        def s(item) = item.to_s.to_json[1...-1].gsub("'", "\\\\'")
       end
     end
   end
