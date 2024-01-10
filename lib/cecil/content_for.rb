@@ -12,7 +12,7 @@ module Cecil
     def content_for(key, &)
       if block_given?
         @content[key] << @store.call(&)
-        nil # so that don't get access to the array of content
+        nil # so that users don't get access to the array of content
       elsif content_for?(key)
         content_for!(key)
       else

@@ -297,9 +297,9 @@ module Cecil
       end
 
       def with(*args, **options, &)
-        raise "Has no placeholders" if args.any? || options.any?
+        raise "This fragement has no placeholders. Fragment:\n#{@src}" if args.any? || options.any?
 
-        raise "Has no block" unless block_given?
+        raise "This method requires a block" unless block_given?
 
         self.class.build(src: @src, parent:, &)
             .tap { builder.replace_node self, _1 }
@@ -385,7 +385,7 @@ module Cecil
       # @!visibility private
       # If this method is called, it means that the placeholder values were
       # never given (i.e. {#with}/{#[]} was never called).
-      def stringify = raise "Mismatch?"
+      def stringify = raise "This fragement has placeholders but was not given values. Fragment:\n#{@src}"
     end
   end
 end

@@ -219,7 +219,7 @@ RSpec.describe Cecil do
           code do
             `line { $code }`
           end
-        end.to raise_error(/mismatch/i)
+        end.to raise_error(/placeholder/i)
       end
 
       it "errors immediately when called if arguments are incorrect" do
@@ -252,6 +252,22 @@ RSpec.describe Cecil do
         end.to eq <<~CODE
           my special code
         CODE
+      end
+
+      it "errors when it has no placeholders but it given values" do
+        expect do
+          code do
+            `just a plain string`[some: "value"]
+          end
+        end.to raise_error(/placeholders/i)
+      end
+
+      it "errors when #[]/#with is not given a block" do
+        expect do
+          code do
+            `just a plain string`[]
+          end
+        end.to raise_error(/block/i)
       end
 
       describe "placeholder delimiting pairs in order to use placeholder as a prefix" do
@@ -529,7 +545,7 @@ RSpec.describe Cecil do
           code do
             `template $name ` << "String"
           end
-        end.to raise_error(/mismatch/i)
+        end.to raise_error(/placeholder/i)
       end
 
       it "errors when appending a literal node to a template node" do
@@ -537,7 +553,7 @@ RSpec.describe Cecil do
           code do
             `template $name ` << `literal`
           end
-        end.to raise_error(/mismatch/i)
+        end.to raise_error(/placeholder/i)
       end
 
       it "can append a string to a deferred node" do

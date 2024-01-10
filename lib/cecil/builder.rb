@@ -44,7 +44,7 @@ module Cecil
       container
     end
 
-    def current_node = @active_nodes.last || raise("No active Cecil node...")
+    def current_node = @active_nodes.last || raise("Not inside a Cecil block")
     def replace_node(...) = current_node.replace_child(...)
 
     def build_node(node)

@@ -31,7 +31,16 @@ module Cecil
       def ignore = adjust_by(0)
 
       # When given an ambiguously indented string, raise an execption
-      def raise_error = ->(src:, **) { raise "Ambiguous, cannot reindent:\n#{src}" }
+      def raise_error
+        lambda do |src:, **|
+          raise <<~MSG
+            Indentation is ambiguous, cannot reindent. Try adding a blank
+            line at the beginning or end of this fragment. Fragment:
+
+            #{src}
+          MSG
+        end
+      end
     end
 
     def level__starts_and_stops_with_content(src, handle_ambiguity:)
@@ -81,9 +90,9 @@ module Cecil
     # @param depth [Integer] The indentation level to reindent to
     # @param indent_chars [String] The indentation characters to use
     # @param handle_ambiguity [Proc] How to handle ambiguous indentation cases.
-    #   Defaults to `Ambiguity.raise_error`, but you may also like
-    #   `Ambiguity.ignore` if your syntax doesn't have signigicant whitesapce, or
-    #   `Ambiguity.adjust_by(n)` if it does.
+    #   Defaults to {Ambiguity.raise_error}, but you may also like
+    #   {Ambiguity.ignore} if your syntax doesn't have signigicant whitesapce, or
+    #   {Ambiguity.adjust_by} if it does.
     def reindent(src, depth, indent_chars, handle_ambiguity: Ambiguity.raise_error)
       # Turn
       # "\n" +
