@@ -11,8 +11,26 @@ module Cecil
     module Ambiguity
       module_function
 
+      # When given an ambiguously indented string, assume that first line is
+      # {adjustment} characters less than the least indented of the other lines
+      #
+      # Useful for this situation. Setting to `adjust_by(4)` will behave
+      # according to what's intended.
+      #
+      #     `def python_fn():
+      #         pass`
       def adjust_by(adjumstment) = ->(min_level:, **) { min_level - adjumstment }
+
+      # When given an ambiguously indented string, assume that first line is the
+      # same as the least indented of the other lines.
+      #
+      # Useful for this situation:
+      #
+      #     `def ruby_method
+      #      end`
       def ignore = adjust_by(0)
+
+      # When given an ambiguously indented string, raise an execption
       def raise_error = ->(src:, **) { raise "Ambiguous, cannot reindent:\n#{src}" }
     end
 
