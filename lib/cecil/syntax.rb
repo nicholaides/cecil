@@ -186,6 +186,30 @@ module Cecil
           end
     end
 
+    # What do to in case of ambiguous indentation.
+    #
+    # 2 examples of ambiguous indentation:
+    #
+    #     `def python_fn():
+    #        pass`
+    #
+    #     `def ruby_method
+    #     end`
+    #
+    # Because only the second line strings have leading indentation, we don't
+    # know how the `pass` or `end` is supposed to be indented because we don't
+    # know the indentation level of the first line.
+    #
+    # In the future we could:
+    # - look at the indentation of other sibling nodes
+    # - use `caller` to identify the source location of that line and read the
+    #   ruby file to figure out the indentation
+    #
+    # For now, though, you can return:
+    #
+    # - {Indentation::Ambiguity.raise_error}
+    # - {Indentation::Ambiguity.ignore} (works for the Ruby example)
+    # - {Indentation::Ambiguity.adjust_by} (works for the Python example)
     def handle_ambiguous_indentation = Indentation::Ambiguity.raise_error
   end
 end
