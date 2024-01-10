@@ -5,7 +5,6 @@ require_relative "indentation"
 module Cecil
   class Node
     # @!visibility private
-    # @!visibility private
     attr_accessor :parent
 
     # @!visibility private
@@ -39,15 +38,13 @@ module Cecil
     # @!visibility private
     def replace_with(node) = builder.replace_node self, node
 
-    # Provide values for placeholders and/or nest a block of code. When
-    # called, will replace this node with a {Literal} or
-    # {LiteralWithChildren}
+    # Provide values for placeholders and/or nest a block of code. When called, will replace this node with a {Literal}
+    # or {LiteralWithChildren}.
     #
-    # Placeholder values can be given as positional arguments or named values,
-    # but not both.
+    # Placeholder values can be given as positional arguments or named values, but not both.
     #
-    # When called with a block, the block is called immediately and any source
-    # code emitted is nested under the current block.
+    # When called with a block, the block is called immediately and any source code emitted is nested under the current
+    # block.
     #
     # @return [Node]
     #
@@ -182,10 +179,10 @@ module Cecil
       def stringify = stringify_children.join
     end
 
-    # Node that will be replaced with its children, after the rest of the
-    # document is evaluated.
+    # Node that will be replaced with its children, after the rest of the document is evaluated.
     #
     # Created by calling {BlockContext#defer} or by the internal workings of {BlockContext#content_for}.
+    #
     # @see BlockContext#defer
     # @see BlockContext#content_for
     class Deferred < Node
@@ -281,8 +278,8 @@ module Cecil
 
     # Node with source code, no placeholders, and no child nodes.
     #
-    # Will not accept any placeholder values, but can receive children via
-    # {#with}/{#[]} and will replace itself with a {LiteralWithChildren}.
+    # Will not accept any placeholder values, but can receive children via {#with}/{#[]} and will replace itself with a
+    # {LiteralWithChildren}.
     class Literal < Node
       # @!visibility private
       def self.build(...)
@@ -339,11 +336,10 @@ module Cecil
       end
     end
 
-    # A node that has placeholders but does not yet have values or chilren.
-    # Created with backticks or {BlockContext#src `` #`(code_str) ``}
+    # A node that has placeholders but does not yet have values or children. Created with backticks or
+    # {BlockContext#src `` #`(code_str) ``}
     #
-    # When {#with}/{#[]} is called on the node, it will replace itself with a
-    # {Literal} or {LiteralWithChildren}
+    # When {#with}/{#[]} is called on the node, it will replace itself with a {Literal} or {LiteralWithChildren}
     class Template < Node
       # @!visibility private
       def self.build(src:, builder:, **)
@@ -383,8 +379,8 @@ module Cecil
       end
 
       # @!visibility private
-      # If this method is called, it means that the placeholder values were
-      # never given (i.e. {#with}/{#[]} was never called).
+      # If this method is called, it means that the placeholder values were never given (i.e. {#with}/{#[]} was never
+      # called).
       def stringify = raise "This fragement has placeholders but was not given values. Fragment:\n#{@src}"
     end
   end
