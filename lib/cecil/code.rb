@@ -1,22 +1,19 @@
 require_relative "syntax"
 
 module Cecil
-  # The {Code} class inherits from {Syntax} and serves as the base class for
-  # generating source code using Cecil. Subclassing {Code} allows customizing
-  # the syntax helpers and defining custom syntax rules.
+  # The {Code} class inherits from {Syntax} and serves as the base class for generating source code using Cecil.
+  # Subclassing {Code} allows customizing the syntax helpers and defining custom syntax rules.
   #
   # To define your own syntax, subclass {Code} and override methods defined in {Syntax}.
   class Code < Syntax
     class << self
-      # Generates output by executing the given block and writing its return
-      # value to the provided output buffer/stream
+      # Generates output by executing the given block and writing its return value to the provided output buffer/stream.
       #
       # The stream is written to by calling `#<<` with the generated source code.
       #
       # @param [#<<] out The output buffer/stream to write to
-      # @yield The given block can use backticks (i.e.
-      # {BlockContext#src `` #`(code_str) ``} ) to add lines of code to the
-      # buffer/stream.
+      # @yield The given block can use backticks (i.e. {BlockContext#src `` #`(code_str) ``} ) to add lines of code to
+      #   the buffer/stream.
       # @return The returned value of `out <<`
       #
       # @example Outputing to stdout

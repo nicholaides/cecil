@@ -12,9 +12,9 @@ module Cecil
       extend helpers
     end
 
-    # Override from Delegator.
-    # This allows methods in the global scope to be accessed, b/c otherwise they
-    # are private and Delegator won't pick them up
+    # @!visibility private
+    # Override from Delegator. This allows methods in the global scope to be accessed, b/c otherwise they are private
+    # and Delegator won't pick them up.
     def target_respond_to?(target, method_name, _include_private) = super(target, method_name, true)
 
     extend Forwardable
@@ -22,8 +22,7 @@ module Cecil
     # @!method src(source_string)
     #   Inserts a node with the given source string.
     #
-    #   The inserted node can be modified by calling
-    #   {Node#with}/{Node#[]}
+    #   The inserted node can be modified by calling {Node#with}/{Node#[]}
     #
     #   @return [Node] the inserted node
     #
@@ -35,19 +34,17 @@ module Cecil
     def `(source_string) = @builder.src(source_string)
 
     # @!method defer(&)
-    #   Defer execution of the the given block until the rest of the document is
-    #   evaluated and insert any content in the document where this method was
-    #   called.
+    #   Defer execution of the the given block until the rest of the document is evaluated and insert any content in the
+    #   document where this method was called.
+    #
     #   @return [Node::Deferred]
     def_delegator :@builder, :defer
 
     # @!method content_for(key, &)
-    #   Stores content for the given key to be insert at a different location in
-    #   the document.
+    #   Stores content for the given key to be insert at a different location in the document.
     #
-    #   If a block is passed, it will be executed and the result stored.
-    #   If no block is passed but the key already has content, it will be retrieved.
-    #   Otherwise, content rendering will be deferred until later.
+    #   If a block is passed, it will be executed and the result stored.  If no block is passed but the key already has
+    #   content, it will be retrieved.  Otherwise, content rendering will be deferred until later.
     #
     #   @param [#hash] key Any hashable object to identify the content but can
     #     be anything that works as a hash key
@@ -105,17 +102,19 @@ module Cecil
     def_delegator :@builder, :content_for
 
     # @!method content_for?(key)
-    #   Returns whether there is any content stored for the given key. This method
-    #     returns immediately and will return false even if `#content_for(key) { ... }` is called later.
+    #   Returns whether there is any content stored for the given key.
+    #
+    #   This method returns immediately and will return
+    #   false even if `#content_for(key) { ... }` is called later.
+    #
     #   @param [#hash] key Any hashable object to identify the content
     #   @return [Boolean] whether any content is stored for the given key
     def_delegator :@builder, :content_for?
 
     # @!method content_for!(key)
-    #   Returns the content stored for the given key, and raises an exception if
-    #   there is no content stored. Calling {#content_for!} is evaluated
-    #   immeditately and will raise an exception even if
-    #   `#content_for(key) { ... }` is called later.
+    #   Returns the content stored for the given key, and raises an exception if there is no content stored. Calling
+    #   {#content_for!} is evaluated immeditately and will raise an exception even if `#content_for(key) { ... }` is
+    #   called later.
     #
     #   @param [#hash] key Any hashable object to identify the content
     #   @return [Array<Node::Detached>] A node of stored content for the given key

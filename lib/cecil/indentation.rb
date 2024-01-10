@@ -2,17 +2,20 @@ module Cecil
   module Indentation
     module_function
 
+    # @!visibility private
     def line_level(str) = str.index(/[^\t ]/) || str.length
 
+    # @!visibility private
     def levels(lines) = lines.map { line_level(_1) }
 
+    # @!visibility private
     def level__basic(src) = levels(src.lines.grep(/\S/)).min
 
     module Ambiguity
       module_function
 
-      # When given an ambiguously indented string, assume that first line is
-      # {adjustment} characters less than the least indented of the other lines
+      # When given an ambiguously indented string, it assumes that first line is {adjustment} characters less than the
+      # least indented of the other lines.
       #
       # Useful for this situation. Setting to `adjust_by(4)` will behave
       # according to what's intended.
@@ -21,8 +24,8 @@ module Cecil
       #         pass`
       def adjust_by(adjumstment) = ->(min_level:, **) { min_level - adjumstment }
 
-      # When given an ambiguously indented string, assume that first line is the
-      # same as the least indented of the other lines.
+      # When given an ambiguously indented string, assume that first line is the same as the least indented of the other
+      # lines.
       #
       # Useful for this situation:
       #
@@ -30,7 +33,7 @@ module Cecil
       #      end`
       def ignore = adjust_by(0)
 
-      # When given an ambiguously indented string, raise an execption
+      # When given an ambiguously indented string, raise an exception
       def raise_error
         lambda do |src:, **|
           raise <<~MSG
@@ -43,6 +46,7 @@ module Cecil
       end
     end
 
+    # @!visibility private
     def level__starts_and_stops_with_content(src, handle_ambiguity:)
       levels = levels(src.lines.drop(1).grep(/\S/))
 
@@ -55,14 +59,20 @@ module Cecil
       min_level
     end
 
+    # @!visibility private
     def level__starts_with_content(src)
       src.lines => _first, *middle, last
 
       levels([*middle.grep(/\S/), last]).min
     end
 
+    # @!visibility private
     SINGLE_LINE = /\A.*\n?\z/
+
+    # @!visibility private
     STARTS_WITH_CONTENT = /\A\S/ # e.g. `content ...
+
+    # @!visibility private
     ENDS_WITH_CONTENT = /.*\S.*\z/ # e.g. "..\n content "
 
     def level(src, handle_ambiguity:)
@@ -80,9 +90,8 @@ module Cecil
       end
     end
 
-    # Reindent `src` string to the level specified by `depth`. `indent_chars` is
-    # used only the current level of indentation as well as add more
-    # indentation.
+    # Reindent `src` string to the level specified by `depth`. `indent_chars` is used only the current level of
+    # indentation as well as add more indentation.
     #
     # Reindents the given source code string to the specified depth.
     #
@@ -90,9 +99,10 @@ module Cecil
     # @param depth [Integer] The indentation level to reindent to
     # @param indent_chars [String] The indentation characters to use
     # @param handle_ambiguity [Proc] How to handle ambiguous indentation cases.
-    #   Defaults to {Ambiguity.raise_error}, but you may also like
-    #   {Ambiguity.ignore} if your syntax doesn't have signigicant whitesapce, or
-    #   {Ambiguity.adjust_by} if it does.
+    #
+    #   - defaults to {Ambiguity.raise_error}
+    #   - use {Ambiguity.ignore} if your syntax doesn't have signigicant whitespace
+    #   - use {Ambiguity.adjust_by} if your syntax has significant whitespace
     def reindent(src, depth, indent_chars, handle_ambiguity: Ambiguity.raise_error)
       # Turn
       # "\n" +
