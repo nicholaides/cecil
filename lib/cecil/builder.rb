@@ -1,5 +1,5 @@
 require_relative "content_for"
-require_relative "nodes"
+require_relative "node"
 
 require "forwardable"
 
