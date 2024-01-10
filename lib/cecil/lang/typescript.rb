@@ -4,53 +4,88 @@ require "json"
 module Cecil
   module Lang
     class TypeScript < Code
-      # Use 2 spaces for indentation
+      # Overrides to use 2 spaces for indentation
       def indent_chars = "  "
 
+      # Overrides to ignore ambiguous indentation
       def handle_ambiguous_indentation = Indentation::Ambiguity.ignore
 
+      # Overrides to add support for closing multi-line comments (e.g. /* ... */)
       def block_ending_pairs = super.merge({ "/*" => "*/" })
 
       module Helpers
         include Code::Helpers
 
-        # "types". Accepts one or a list of types and returns their union.
+        # Short for "types"; Accepts one or a list of types and returns their union.
         #
-        # E.g. `t ["undefined", "object"]` returns `"undefined | object"
-        # E.g. `t "undefined"` returns `"undefined"
+        # @example
+        #   the_types = ["Websocket", "undefined", "null"]
+        #   `function register<$types>() {}`[t the_types]
+        #
+        #   # outputs:
+        #   # function register<Websocket | undefined | null>() {}
+        #
+        # @param items [Array[#to_s], #to_s] One or a list of objects that respond to `#to_s`
+        # @return [String] The stringified inputs concatenated with `" | "`
         def t(items) = Array(items).compact.join(" | ")
 
-        # "list". Accepts one or a list of strings and returns them joined with ", "
+        # Short for "list"; Accepts one or a list of strings and returns them joined with `", "`
         #
-        # E.g. `l ["Websocket", "Array"]` returns "Websocket, Array"
-        # E.g. `l "Websocket"` returns "Websocket"
+        # @example
+        #   the_classes = ["Websocket", "Array", "Function"]
+        #   `register($args)`[l the_classes]
+        #
+        #   # outputs:
+        #   # register(Websocket, Array, Function)
+        #
+        # @example
+        #  E.g. `l "Websocket"` returns "Websocket"
+        #
+        # @param items [Array[#to_s], #to_s] One or a list of objects that respond to `#to_s`
+        # @return [String] The stringified inputs concatenated with `", "`
         def l(items) = Array(items).compact.join(", ")
 
-        # "json". Returns the JSON representation of an object.
+        # Short for "json"; returns the JSON representation of the input.
         #
         # Useful for when you have a value in Ruby and you want it as a literal
-        # value in the TypeScript source code. E.g.:
-        # `
-        #   name = "Bob"
-        #   `const username = $name`[j name]
+        # value in the JavaScript/TypeScript source code.
         #
-        #   outputs: `const username = "Bob"`
-        # `
+        # @example
+        #   current_user = { name: "Bob" }
+        #   `const user = $user_obj`[j current_user]
+        #
+        #   # outputs:
+        #   # const user = {"name":"Bob"}
+        #
+        # @param item [#to_json] Any object that responds to `#to_json`
+        # @return [String] JSON representation of the input
         def j(item) = item.to_json
 
-        # "string content". Returns a JSON string without quotes.
+        # Short for "string content"; returns a JSON string without quotes.
         #
-        # Useful for inserting data into a string:
-        #  name = "Bob"
-        # `const admin = "$name (Admin)"`[s name]
+        # Useful for inserting data into a string or for outputting a string but using quotes to make it clear to the
+        # reader what the intended output will be.
         #
-        # outputs: `const admin = "Bob (Admin)"`
+        # It also escapes single quotes and backticks so that it can be inserted into single-quoted strings and string
+        # templates.
         #
+        # @example Inserting into a string
+        #   name = "Bob \"the Machine\" O'Brian"
+        #   `const admin = "$name (Admin)"`[s name]
         #
-        # Also useful to make the template communicate more clearly that a value
-        # will be a string. E.g.
-        # `const username = "$name"`[s name]
-        def s(item) = item.to_s.to_json[1...-1].gsub("'", "\\\\'")
+        #   # outputs:
+        #   # const admin = "Bob \"the Machine\" O\'Brian (Admin)"
+        #
+        # @example Outputting what is obviously a string
+        #   name = "Bob \"the Machine\" O'Brian"
+        #   `const admin = "$name"`[s name]
+        #
+        #   # outputs:
+        #   # const admin = "Bob \"the Machine\" O\'Brian"
+        #
+        # @param item [#to_s] A string or any object that responds to `#to_s`
+        # @return [String] A JSON string without quotes
+        def s(item) = item.to_s.to_json[1...-1].gsub("'", "\\\\'").gsub("`", "\\\\`")
       end
     end
   end

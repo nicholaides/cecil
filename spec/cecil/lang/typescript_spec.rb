@@ -150,6 +150,9 @@ RSpec.describe Cecil::Lang::TypeScript do
       it "escapes single quotes" do
         expect(s("hello 'world'")).to eq "hello \\'world\\'"
       end
+      it "escapes backticks" do
+        expect(s("hello `world`")).to eq "hello \\`world\\`"
+      end
     end
   end
 end
