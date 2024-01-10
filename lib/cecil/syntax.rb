@@ -93,7 +93,7 @@ module Cecil
     #    class MySyntax < Cecil::Code
     #      def placeholder_delimiting_pairs = { "" => "" }
     #      # or
-    #      def placeholder_delimiting_pairs = PLACEHOLDER_NO_BRACKETS_PAIR
+    #      def placeholder_delimiting_pairs = Cecil::Syntax::PLACEHOLDER_NO_BRACKETS_PAIR
     #    end
     def placeholder_delimiting_pairs
       {
