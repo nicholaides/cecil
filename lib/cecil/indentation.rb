@@ -14,7 +14,7 @@ module Cecil
     module Ambiguity
       module_function
 
-      # When given an ambiguously indented string, it assumes that first line is {adjustment} characters less than the
+      # When given an ambiguously indented string, it assumes that first line is `adjustment` characters less than the
       # least indented of the other lines.
       #
       # Useful for this situation. Setting to `adjust_by(4)` will behave
@@ -22,7 +22,7 @@ module Cecil
       #
       #     `def python_fn():
       #         pass`
-      def adjust_by(adjumstment) = ->(min_level:, **) { min_level - adjumstment }
+      def adjust_by(adjustment) = ->(min_level:, **) { min_level - adjustment }
 
       # When given an ambiguously indented string, assume that first line is the same as the least indented of the other
       # lines.
@@ -75,6 +75,7 @@ module Cecil
     # @!visibility private
     ENDS_WITH_CONTENT = /.*\S.*\z/ # e.g. "..\n content "
 
+    # @!visibility private
     def level(src, handle_ambiguity:)
       case src
       when SINGLE_LINE
