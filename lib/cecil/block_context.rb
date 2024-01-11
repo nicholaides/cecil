@@ -2,7 +2,7 @@ require "forwardable"
 require "delegate"
 
 module Cecil
-  # The BlockContext contains methods available to you inside a Cecil block.
+  # The {BlockContext} contains methods available to you inside a Cecil block.
   # This includes the methods below as well as any helpers passed in by your {Code}.
   class BlockContext < SimpleDelegator
     # @!visibility private

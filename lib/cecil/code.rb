@@ -5,9 +5,52 @@ module Cecil
   # {Code} serves as the base class for generating source code using Cecil.
   # Subclassing {Code} allows customizing the behavior (indentation, auto-closing brackets, etc) and providing helpers.
   #
-  # To define your own syntax, subclass {Code}. Override instance methods to change behavior.
+  # To define your own syntax, subclass {Code}.
   #
-  # Implement a `Helpers` module in your subclass to provide helper methods available when using your subclass.
+  # - Override instance methods to change behavior.
+  # - Defined a module named `Helpers` to add helpers availble to the Cecil block.
+  #
+  # Check out classes in the {Lang} module for examples of customizing {Code}.
+  #
+  # @example Creating a custom syntax
+  #   class CSS < Cecil::Code
+  #     # Override instance methods to customize behavior
+  #
+  #     def indent_chars = "  " # use 2 spaces for indentation
+  #
+  #     # methods in this module will be available in a Cecil block
+  #     module Helpers
+  #
+  #       # if we want to inherit other helpers, include the module
+  #       include Cecil::Code::Helpers
+  #
+  #       def data_uri(file) = DataURI.from_file(file) # fake code
+  #     end
+  #   end
+  #
+  #   background_types = {
+  #     star: "star-@100x100.png",
+  #     dots: "polka-dots@50x50.png",
+  #   }
+  #
+  #   CSS.generate_string do
+  #     background_types.each do |bg_name, image_file|
+  #       `.bg-$class {`[bg_name] do
+  #
+  #         # #data_uri is available because it was defined in CSS::Helpers
+  #         `background-image: url($img);`[data_uri(image_file)]
+  #       end
+  #     end
+  #   end
+  #
+  #   # outputs:
+  #   # .bg-star {
+  #   #   background-image: url(data:image/png;base64,iRxVB0…);
+  #   # }
+  #   # .bg-dots {
+  #   #   background-image: url(data:image/png;base64,iRxVB0…);
+  #   # }
+
   class Code
     class << self
       # Generates output by executing the given block and writing its return value to the provided output buffer/stream.
@@ -84,8 +127,8 @@ module Cecil
     #    end
     def indent_chars = "    "
 
-    # When indenting with a code block, the end of the code string is searched for consecutive opening brackets. Each
-    # opening bracket gets closed with its matching closing bracket.
+    # When indenting with a code block, the end of the code string is searched for consecutive opening brackets, each of
+    # which gets closed with a matching closing bracket.
     #
     # E.g.
     #
@@ -99,7 +142,7 @@ module Cecil
     #
     # @return [Hash{String => String}] Pairs of opening/closing strings
     #
-    # @example Close `{` and `[` brackets.
+    # @example Override to close only `{` and `[` brackets.
     #    class MySyntax < Cecil::Code
     #      def block_ending_pairs
     #        {
@@ -112,7 +155,12 @@ module Cecil
     #      end
     #    end
     #
-    # @example Turn this feature off, and don't close open brackets
+    # @example Override to also close `/*` with `*/`
+    #    class MySyntax < Cecil::Code
+    #      def block_ending_pairs = super.merge({ '/*' => '*/' })
+    #    end
+    #
+    # @example Override to turn this feature off, and don't close open brackets
     #    class MySyntax < Cecil::Code
     #      def block_ending_pairs = {}
     #    end
@@ -143,12 +191,12 @@ module Cecil
     #
     # @return [Regexp]
     #
-    # @example Allow `$/my_field/` syntax for placeholders, in addition to the default options
+    # @example Override to allow `$/my_field/` syntax for placeholders, in addition to the default options
     #    class MySyntax < Cecil::Code
     #      def placeholder_delimiting_pairs = super.merge("/" => "/")
     #    end
     #
-    # @example Turn off placeholder delimiting pairs (i.e. only allow `$my_field` syntax)
+    # @example Override to turn off placeholder delimiting pairs (i.e. only allow `$my_field` syntax)
     #    class MySyntax < Cecil::Code
     #      def placeholder_delimiting_pairs = { "" => "" }
     #      # or
@@ -169,18 +217,16 @@ module Cecil
     #
     # @return [Regexp]
     #
-    # @example Only allow all-caps placeholders (e.g. `$MY_FIELD`)
+    # @example Override to only allow all-caps placeholders (e.g. `$MY_FIELD`)
     #    class MySyntax < Cecil::Code
     #      def placeholder_ident_re = /[A-Z_]+/
     #    end
     #
-    # @example Allow any characters placeholders, and require brackets (e.g. `${ my field ??! :) }`)
+    # @example Override to allow any characters placeholders, and require brackets (e.g. `${ my field ??! :) }`)
     #    class MySyntax < Cecil::Code
     #      # override `#placeholder_delimiting_pairs` to allow the default
     #      # brackets but not allow no brackets
     #      def placeholder_delimiting_pairs = super.except("")
-    #
-    #      # I haven't tried this... the Regexp might need to be non-greedy
     #      def placeholder_ident_re = /.+/
     #    end
     def placeholder_ident_re = /[[:alnum:]_]+/
@@ -189,12 +235,12 @@ module Cecil
     #
     # @return [Regexp]
     #
-    # @example Make placeholders start with `%`, e.g. `%myField`
+    # @example Override to make placeholders start with `%`, e.g. `%myField`
     #    class MySyntax < Cecil::Code
     #      def placeholder_start_re = /%/
     #    end
     #
-    # @example Make placeholders be all-caps without starting characters (e.g. `MY_FIELD`)
+    # @example Override to make placeholders be all-caps without starting characters (e.g. `MY_FIELD`)
     #    class MySyntax < Cecil::Code
     #      def placeholder_start_re = //
     #    end
@@ -231,9 +277,11 @@ module Cecil
     #
     # @return [Array<Placeholder>]
     #
-    # @example Palindromic names are not considered placeholders
+    # @example Override to transform placeholder names to uppercaser
     #    class MySyntax < Cecil::Code
-    #      def scan_for_placeholders(...) = super.reject { _1.ident == _1.ident.reverse }
+    #      super.map do |placeholder|
+    #        placeholder.transform_key(:ident, &:upcase)
+    #      end
     #    end
     def scan_for_placeholders(src)
       Text.scan_for_re_matches(src, placeholder_re)
@@ -252,18 +300,29 @@ module Cecil
     #     `def ruby_method
     #     end`
     #
-    # Because only the second line strings have leading indentation, we don't know how the `pass` or `end` is supposed
-    # to be indented because we don't know the indentation level of the first line.
+    # Because only the second line strings have leading indentation, we don't know how `pass` or `end` should be
+    # indented.
     #
-    # In the future we could:
-    # - look at the indentation of other sibling nodes
-    # - use `caller` to identify the source location of that line and read the ruby file to figure out the indentation
+    # In the future we could use `caller` to identify the source location of that line and read the ruby file to figure
+    # out the indentation.
     #
     # For now, though, you can return:
     #
     # - {Indentation::Ambiguity.raise_error}
     # - {Indentation::Ambiguity.ignore} (works for the Ruby example)
     # - {Indentation::Ambiguity.adjust_by} (works for the Python example)
+    #
+    # @example Override to ignore ambiguous indentation
+    #   class MyRubySyntax < Cecil::Code
+    #     def handle_ambiguous_indentation = Indentation::Ambiguity.ignore
+    #   end
+    #
+    # @example Override to adjust indentation
+    #   class MyRubySyntax < Cecil::Code
+    #     def handle_ambiguous_indentation
+    #       Indentation::Ambiguity.adjust_by(2)
+    #     end
+    #   end
     def handle_ambiguous_indentation = Indentation::Ambiguity.raise_error
   end
 end

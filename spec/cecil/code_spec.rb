@@ -235,6 +235,21 @@ RSpec.describe Cecil::Code do
           CODE
         end
       end
+
+      describe "overriding to allow any characters at all" do
+        def_syntax do
+          def placeholder_delimiting_pairs = super.except("")
+          def placeholder_ident_re = /.+/
+        end
+
+        it "only matches placeholders that match that ident regexp" do
+          expect_syntax do
+            `class ${C{~~~}} extends $my $( $$$ )`["C{~~~}": "Baby", " $$$ ": "Papa"]
+          end.to eq <<~CODE
+            class Baby extends $my Papa
+          CODE
+        end
+      end
     end
 
     describe ".placeholder_start_re" do
@@ -297,7 +312,7 @@ RSpec.describe Cecil::Code do
 
       describe "overriding" do
         def_syntax do
-          def scan_for_placeholders(...) = super.each { _1.ident.upcase! }
+          def scan_for_placeholders(...) = super.map { _1.transform_key(:ident, &:upcase) }
         end
 
         it "capitalizes idents" do
