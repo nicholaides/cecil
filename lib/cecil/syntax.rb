@@ -5,9 +5,13 @@ module Cecil
   # Provides default behavior for formatting and manipulating strings of code.
   # It handles indentation, placeholder substitution, etc.
   #
-  # To define a class for your own language, subclass {Code} and override
-  # methods of this class.
+  # To define a class for your own language, subclass {Code} (which subclasses {Syntax}) and override methods of this
+  # class.
   class Syntax
+    # Methods defined in this module are available in a Cecil block.
+    #
+    # To add your own helper methods, subclass {Code}, and in your class, define a module named `Helpers`. If you want
+    # your parent class' helper methods, then `include` your parent class' `Helpers` module in yours.
     module Helpers
     end
 
@@ -28,14 +32,18 @@ module Cecil
     #    end
     def indent_chars = "    "
 
-    # When indenting with a code block, the end of the code string is searched
-    # for consecutive opening brackets. Each opening bracket gets closed
-    # with its matching closing bracket.
+    # When indenting with a code block, the end of the code string is searched for consecutive opening brackets. Each
+    # opening bracket gets closed with its matching closing bracket.
     #
     # E.g.
     #
-    #     `my_func([`   # is closed with "])"
-    #     `my_func( [ ` # is closed with " ] )"
+    #     `my_func( (<`[] do
+    #       `more code`
+    #     end
+    #     # outputs:
+    #     # my_func((<
+    #     #     more code
+    #     # >) )
     #
     # @return [Hash{String => String}] Pairs of opening/closing strings
     #
@@ -68,8 +76,8 @@ module Cecil
       }
     end
 
-    # Pairs that can be used to surround placeholder names. The pairs that are
-    # used do not change the placeholder's name.
+    # Pairs that can be used to surround placeholder names. The pairs that are used do not change the placeholder's
+    # name.
     #
     # E.g., these all produce the same result:
     #
@@ -79,8 +87,7 @@ module Cecil
     #     `const $<field>`[field: 'username']
     #     `const $(field)`[field: 'username']
     #
-    # By default, `"" => ""` is one of the pairs, meaning you don't need to
-    # surround placeholder names.
+    # By default, `"" => ""` is one of the pairs, meaning you don't need to surround placeholder names.
     #
     # @return [Regexp]
     #
@@ -141,15 +148,13 @@ module Cecil
     #    end
     def placeholder_start_re = /\$/
 
-    # Regexp to match placeholders. By default, this constructs a Regexp from
-    # the pieces defined in:
+    # Regexp to match placeholders. By default, this constructs a Regexp from the pieces defined in:
     #
     # - {#placeholder_delimiting_pairs}
     # - {#placeholder_ident_re}
     # - {#placeholder_start_re}
     #
-    # If you override this method, make sure it returns a Regexp that has a
-    # capture group named "placeholder".
+    # If you override this method, make sure it returns a Regexp that has a capture group named "placeholder".
     #
     # @return [Regexp] A regexp with a capture group named "placeholder"
     def placeholder_re
@@ -167,9 +172,8 @@ module Cecil
       /x
     end
 
-    # Returns a list of {Placeholder} objects representing placeholders found in
-    # the given string. The default implementation scans the string for matches
-    # of {#placeholder_re}.
+    # Returns a list of {Placeholder} objects representing placeholders found in the given string. The default
+    # implementation scans the string for matches of {#placeholder_re}.
     #
     # This method can be overriden to change the way placeholders are parsed, or to omit or add placeholders.
     #
@@ -196,14 +200,12 @@ module Cecil
     #     `def ruby_method
     #     end`
     #
-    # Because only the second line strings have leading indentation, we don't
-    # know how the `pass` or `end` is supposed to be indented because we don't
-    # know the indentation level of the first line.
+    # Because only the second line strings have leading indentation, we don't know how the `pass` or `end` is supposed
+    # to be indented because we don't know the indentation level of the first line.
     #
     # In the future we could:
     # - look at the indentation of other sibling nodes
-    # - use `caller` to identify the source location of that line and read the
-    #   ruby file to figure out the indentation
+    # - use `caller` to identify the source location of that line and read the ruby file to figure out the indentation
     #
     # For now, though, you can return:
     #
