@@ -188,11 +188,11 @@ module Cecil
     # @see BlockContext#content_for
     class Deferred < Node
       # @!visibility private
-      def initialize(**, &)
-        super(**)
+      def initialize(**kwargs, &block) # rubocop:disable Style/ArgumentsForwarding,Naming/BlockForwarding
+        super(**kwargs)
 
         @evaluate = lambda do
-          Container.new(**, &)
+          Container.new(**kwargs, &block) # rubocop:disable Style/ArgumentsForwarding,Naming/BlockForwarding
                    .tap { root.replace_child self, _1 }
         end
       end

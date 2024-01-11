@@ -75,14 +75,14 @@ RSpec.describe Cecil::Code do
   end
 
   describe "overriding instance methods to change behavior" do
-    def self.def_syntax(&)
+    def self.def_syntax(&block) # rubocop:disable Naming/BlockForwarding
       let(:syntax) do
-        Class.new(described_class, &)
+        Class.new(described_class, &block) # rubocop:disable Naming/BlockForwarding
       end
     end
 
     def expect_syntax(&) = expect(syntax.generate_string(&))
-    def expect_syntax_block(&) = expect { syntax.generate_string(&) }
+    def expect_syntax_block(&block) = expect { syntax.generate_string(&block) } # rubocop:disable Naming/BlockForwarding
 
     describe ".indent_chars" do
       describe "overriding with another string" do

@@ -6,12 +6,12 @@ RSpec.describe Cecil::Indentation do
   extend described_class
 
   describe ".reindent" do
-    def self.reindents(template_str, desc_more = " ", **)
+    def self.reindents(template_str, desc_more = " ", **kwargs) # rubocop:disable Style/ArgumentsForwarding
       describe "given#{desc_more}\"#{template_str}\"" do
         template = IndentationTemplate.new(template_str)
         [0, 1, 2, 3, 10, 20].each do |level|
           it "reindents to level #{level}" do
-            actual = reindent(template.as_input, level, "~~", **)
+            actual = reindent(template.as_input, level, "~~", **kwargs) # rubocop:disable Style/ArgumentsForwarding
             expected = template.indented "~~" * level
             expect(actual).to eq expected
           end
