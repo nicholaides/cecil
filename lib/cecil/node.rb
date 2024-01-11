@@ -69,7 +69,7 @@ module Cecil
     #   `const $field: $Class = new $Class()`[field: "user", Class: "User"]
     #   # const user: User = new User()
     #
-    # @example Blocks indent their emitted contents (see {Syntax#indent_chars})
+    # @example Blocks indent their emitted contents (see {Code#indent_chars})
     #   `class $Class {`["User"] do
     #     `public $field: $type`["name", "string"]
     #
@@ -94,7 +94,7 @@ module Cecil
     #   #   }
     #   # }
     #
-    # @example Blocks close trailing open brackets (defined in {Syntax#block_ending_pairs})
+    # @example Blocks close trailing open brackets (defined in {Code#block_ending_pairs})
     #   `ids = new Set([`[] do
     #     `1, 2, 3`
     #   end
@@ -102,7 +102,7 @@ module Cecil
     #   #   1, 2, 3
     #   # ])
     #
-    # @see Syntax
+    # @see Code
     def with(*positional_values, **named_values, &) = raise "Not implemented" # rubocop:disable Lint/UnusedMethodArgument
 
     # Alias of {#with}

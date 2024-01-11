@@ -97,7 +97,7 @@ RSpec.describe Cecil::Text do
 
   describe ".interpolate_named" do
     let(:template) { "class $class<$generic> extends $parent export $class" }
-    let(:placeholders) { Cecil::Syntax.new.scan_for_placeholders(template) }
+    let(:placeholders) { Cecil::Code.new.scan_for_placeholders(template) }
 
     it "replaces placeholders" do
       values = { class: "MyClass", parent: "my_parent", generic: "T" }
@@ -146,7 +146,7 @@ RSpec.describe Cecil::Text do
 
   describe ".interpolate_positional" do
     let(:template) { "class $class<$generic> extends $parent export $class" }
-    let(:placeholders) { Cecil::Syntax.new.scan_for_placeholders(template) }
+    let(:placeholders) { Cecil::Code.new.scan_for_placeholders(template) }
 
     it "replaces placeholders" do
       values = %w[MyClass T my_parent]
