@@ -38,7 +38,7 @@ module Cecil
     def detached_node(&) = Node::Detached.new(root, &)
 
     def reattach_nodes(detached_nodes)
-      container = Node::ContainerNode.new(parent: current_node) {} # rubocop:disable Lint/EmptyBlock
+      container = Node::Container.new(parent: current_node) {} # rubocop:disable Lint/EmptyBlock
       detached_nodes.each { _1.attach_to container }
       add_node container
       container

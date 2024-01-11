@@ -141,6 +141,7 @@ module Cecil
       end << string_or_node
     end
 
+    # @!visibility private
     module AsParent
       def self.included(base)
         base.attr_accessor :children
@@ -191,8 +192,8 @@ module Cecil
         super(**)
 
         @evaluate = lambda do
-          ContainerNode.new(**, &)
-                       .tap { root.replace_child self, _1 }
+          Container.new(**, &)
+                   .tap { root.replace_child self, _1 }
         end
       end
 
@@ -223,13 +224,14 @@ module Cecil
     end
 
     # @!visibility private
-    class ContainerNode < Node
+    class Container < Node
       include AsParent
 
       def depth = parent.depth
     end
 
-    class SameLineContainer < ContainerNode
+    # Node that contains child nodes that were appended to via {Node#<<}.
+    class SameLineContainer < Container
       def initialize(parent:)
         super(parent:) do
           yield self if block_given?
@@ -256,10 +258,10 @@ module Cecil
 
     # Node that will be inserted in another location in the document.
     #
-    # Created by {BlockContext#content_for}
+    # Created by {BlockContext#content_for} with a block.
     #
     # @see BlockContext#content_for
-    class Detached < ContainerNode
+    class Detached < Container
       # @!visibility private
       attr_accessor :root
 
@@ -276,7 +278,8 @@ module Cecil
       end
     end
 
-    # Node with source code, no placeholders, and no child nodes.
+    # Node with source code, no placeholders, and no child nodes. Created by calling
+    # {BlockContext#src `` #`(code_str) ``} with a string that has no placeholders.
     #
     # Will not accept any placeholder values, but can receive children via {#with}/{#[]} and will replace itself with a
     # {LiteralWithChildren}.
@@ -314,7 +317,8 @@ module Cecil
       alias stringify stringify_src
     end
 
-    # Node with source code, no placeholders, and child nodes
+    # Node with source code, no placeholders, and child nodes. Created by calling {BlockContext#src `` #`(code_str) ``}
+    # with a string without placeholders and then calling {#with}/{#[]} on it.
     class LiteralWithChildren < Literal
       include AsParent
 
@@ -379,8 +383,6 @@ module Cecil
       end
 
       # @!visibility private
-      # If this method is called, it means that the placeholder values were never given (i.e. {#with}/{#[]} was never
-      # called).
       def stringify = raise "This fragement has placeholders but was not given values. Fragment:\n#{@src}"
     end
   end
