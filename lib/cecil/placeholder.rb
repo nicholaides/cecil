@@ -20,6 +20,10 @@ module Cecil
     def with(**kwargs) = self.class.new(**to_h.merge(kwargs))
 
     # Create a new {Placeholder} with one member transformed by the given block
+    #
+    # @example Make a new placeholder with ident in uppercase
+    #   placeholder.transform_key(:ident, &:upcase)
+    #
     # @param [Symbol] member
     # @return [Placeholder]
     def transform_key(member) = with(**{ member => yield(self[member]) })

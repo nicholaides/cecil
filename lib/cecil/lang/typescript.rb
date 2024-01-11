@@ -38,9 +38,6 @@ module Cecil
         #   # outputs:
         #   # register(Websocket, Array, Function)
         #
-        # @example
-        #  E.g. `l "Websocket"` returns "Websocket"
-        #
         # @param items [Array[#to_s], #to_s] One or a list of objects that respond to `#to_s`
         # @return [String] The stringified inputs concatenated with `", "`
         def l(items) = Array(items).compact.join(", ")
