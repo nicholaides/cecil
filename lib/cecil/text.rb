@@ -1,3 +1,5 @@
+require "set"
+
 module Cecil
   # Helper methods for string searching, manipulating, etc.
   module Text

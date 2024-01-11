@@ -17,7 +17,7 @@ module Cecil
     def range = offset_start...offset_end
 
     # Mimicks Data#with, introduced in Ruby 3.2
-    def with(**kwargs) = self.class.new(**to_h.merge(kwargs))
+    def with(**kwargs) = self.class.new(*to_h.merge(kwargs).values_at(*members))
 
     # Create a new {Placeholder} with one member transformed by the given block
     #

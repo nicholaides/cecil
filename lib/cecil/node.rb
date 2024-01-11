@@ -147,8 +147,8 @@ module Cecil
         base.attr_accessor :children
       end
 
-      def initialize(**, &)
-        super(**)
+      def initialize(**kwargs, &)
+        super(**kwargs)
 
         self.children = []
         add_to_root(&)
@@ -156,7 +156,7 @@ module Cecil
 
       def add_to_root(&) = builder.build_node(self, &)
 
-      def build_child(**) = root.build_child(**, parent: self)
+      def build_child(**kwargs) = root.build_child(**kwargs, parent: self)
 
       def add_child(child) = children << child
 
@@ -294,8 +294,8 @@ module Cecil
       end
 
       # @!visibility private
-      def initialize(src:, **)
-        super(**)
+      def initialize(src:, **kwargs)
+        super(**kwargs)
         @src = src
       end
 
@@ -350,19 +350,19 @@ module Cecil
     # When {#with}/{#[]} is called on the node, it will replace itself with a {Literal} or {LiteralWithChildren}
     class Template < Node
       # @!visibility private
-      def self.build(src:, builder:, **)
+      def self.build(src:, builder:, **kwargs)
         placeholders = builder.syntax.scan_for_placeholders(src)
 
         if placeholders.any?
-          new(src:, placeholders:, **)
+          new(src:, placeholders:, **kwargs)
         else
-          Literal.new(src:, **)
+          Literal.new(src:, **kwargs)
         end
       end
 
       # @!visibility private
-      def initialize(src:, placeholders:, **)
-        super(**)
+      def initialize(src:, placeholders:, **kwargs)
+        super(**kwargs)
         @src = src
         @placeholders = placeholders
       end
