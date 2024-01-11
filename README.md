@@ -6,7 +6,7 @@ Your templates can look like the source code you want to generate thanks to Ceci
 
 ## Features
 
-### Writing template in plain Ruby code
+### Write template in plain Ruby code
 
 Pass a block to Cecil and use backticks (or use `src` if you prefer) to add lines of source code. Cecil will return your generated source code as a string.
 
