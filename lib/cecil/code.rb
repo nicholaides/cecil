@@ -273,16 +273,22 @@ module Cecil
     # Returns a list of {Placeholder} objects representing placeholders found in the given string. The default
     # implementation scans the string for matches of {#placeholder_re}.
     #
-    # This method can be overriden to change the way placeholders are parsed, or to omit or add placeholders.
+    # This method can be overriden to change the way placeholders are parsed, or to omit, add, or modify placeholders.
     #
     # @return [Array<Placeholder>]
     #
-    # @example Override to transform placeholder names to uppercaser
+    # @example Override to transform placeholder names to lowercase
     #    class MySyntax < Cecil::Code
     #      super.map do |placeholder|
-    #        placeholder.transform_key(:ident, &:upcase)
+    #        placeholder.transform_key(:ident, &:downcase)
     #      end
     #    end
+    #
+    #    MySyntax.generate_string do
+    #      `const $VAR = $VALUE`[var: 'id', value: '42']
+    #    end
+    #    # outputs:
+    #    # const id = 42
     def scan_for_placeholders(src)
       Text.scan_for_re_matches(src, placeholder_re)
           .map do |match|
