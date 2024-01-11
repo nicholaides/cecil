@@ -1,5 +1,6 @@
 AllCops:
   TargetRubyVersion: 3.2
+  NewCops: enable
 
 Style/StringLiterals:
   Enabled: true
@@ -25,9 +26,6 @@ Metrics/ClassLength:              { Enabled: false }
 Metrics/PerceivedComplexity:      { Enabled: false }
 Metrics/CyclomaticComplexity:     { Enabled: false }
 Metrics/MethodLength:             { Enabled: false }
-
-AllCops:
-  NewCops: enable
 
 Layout/LineLength:
   Max: 120
