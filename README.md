@@ -1,10 +1,12 @@
 # Cecil
 
-An experimental templating library for generating source code. Leverages Ruby's flexible syntax so that your templates can look like the source code you want to generate.
+An experimental templating library for generating source code.
+
+Your templates can look like the source code you want to generate thanks to Cecil's clever use of Ruby's flexible syntax.
 
 ## Features
 
-### It's just Ruby
+### Writing template in plain Ruby code
 
 Pass a block to Cecil and use backticks (or use `src` if you prefer) to add lines of source code. Cecil will return your generated source code as a string.
 
@@ -12,8 +14,10 @@ Example:
 
 ```ruby
 model_code = Cecil::Code.generate_string do
+  # strings in backticks get added to the document
   `import Model from '../model'`
 
+  # multi-line strings work great. Cecil preserves their indentation.
   `class User extends Model {
     id: number
     name: string
@@ -39,7 +43,7 @@ class User extends Model {
 export type Username = User['name']
 ```
 
-### Interpolation syntax with high fidelity to intended output
+### Interpolate values with low-noise syntax
 
 Use `#[]` on the backticks to replace placeholders with actual values.
 
@@ -56,10 +60,10 @@ default_value = ["SilentHaiku", "DriftingSnowfall"]
 field_class = "Model"
 
 Cecil::Code.generate_string do
-  # positional
+  # positional arguments match placeholders by position
   `let $field: $FieldType = $default`[field, types.join('|'), default_value.sort.to_json]
 
-  # named
+  # named arguments match placeholders by name
   `let $field: $FieldClass<$Types> | null = new $FieldClass($default)`[
     field: field,
     FieldClass: field_class,
@@ -76,7 +80,7 @@ let user: string|string[] = ["DriftingSnowfall","SilentHaiku"]
 let user: Model<string|string[]> | null = new Model(["DriftingSnowfall","SilentHaiku"])
 ```
 
-### Indent code blocks & close brackets automatically
+### Indents code blocks & closes brackets automatically
 
 A block passed to `#[]` gets indented and open brackets get closed automatically.
 
@@ -89,12 +93,13 @@ field_default = "Unnamed"
 
 Cecil::Code.generate_string do
   `class $Class extends Model {`[model] do
+    # indentation is preserved
     `id: number`
 
     `override get $field() {`[field_name] do
       `return super.$field ?? $defaultValue`[field_name, field_default.to_json]
     end
-  end
+  end # the open bracket from `... Model {` gets closed with "}"
 end
 ```
 
@@ -124,6 +129,7 @@ models = [
 ]
 
 Cecil::Code.generate_string do
+  # insert content collected for :imports
   content_for :imports
 
   models.each do |model|
@@ -133,15 +139,18 @@ Cecil::Code.generate_string do
     end
 
     content_for :imports do
+      # this gets inserted above
       `import $SuperClass from '../models/$SuperClass'`[SuperClass: model[:inherits]]
     end
 
     content_for :registrations do
+      # this gets inserted below
       `$SuperClass.registerAncestor($Class)`[model[:inherits], model[:name]]
     end
   end
 
   ``
+  # insert content collected for :registrations
   content_for :registrations
 end
 ```
@@ -181,13 +190,19 @@ models = [
 
 Cecil::Code.generate_string do
   superclasses = []
+
   defer do
+    # This block gets called after the rest of the parent block is finished.
+    #
+    # By the time this block is called, the `superclasses` array is full of data
+    #
+    # Even though this block is called later, the output is added at the location where `defer` was called
     `import { $SuperClasses } from '../models'`[superclasses.uniq.sort.join(', ')]
     ``
   end
 
   models.each do |model|
-    superclasses << model[:inherits]
+    superclasses << model[:inherits] # add more strings to `superclasses`, which is used in the block above
 
     `class $Class extends $SuperClass {}`[model[:name], model[:inherits]]
   end
