@@ -16,7 +16,7 @@ module Cecil
     # @return [Range(Integer)]
     def range = offset_start...offset_end
 
-    # Mimicks {Data#with}, introduced in Ruby 3.2
+    # Mimicks Data#with, introduced in Ruby 3.2
     def with(**kwargs) = self.class.new(**to_h.merge(kwargs))
 
     # Create a new {Placeholder} with one member transformed by the given block
