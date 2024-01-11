@@ -232,18 +232,21 @@ module Cecil
 
     # Node that contains child nodes that were appended to via {Node#<<}.
     class SameLineContainer < Container
+      # @!visibility private
       def initialize(parent:)
         super(parent:) do
           yield self if block_given?
         end
       end
 
+      # @!visibility private
       def stringify
         *firsts, last = stringify_children
         firsts_without_trailing_newline = firsts.map { _1.sub(/\R\z/m, "") }
         [*firsts_without_trailing_newline, last].join
       end
 
+      # @!visibility private
       def <<(string_or_node)
         case string_or_node
         in Node => node
@@ -296,6 +299,7 @@ module Cecil
         @src = src
       end
 
+      # @!visibility private
       def with(*args, **options, &)
         raise "This fragement has no placeholders. Fragment:\n#{@src}" if args.any? || options.any?
 
