@@ -3,7 +3,33 @@ require "delegate"
 
 module Cecil
   # The {BlockContext} contains methods available to you inside a Cecil block.
-  # This includes the methods below as well as any helpers passed in by your {Code}.
+  #
+  # Methods available in the scope of a Cecil block are:
+  #
+  # - **Methods & variables from local scope**
+  # - **{BlockContext} instance methods** for emitting code (listed below)
+  # - **Helper methods** in your {Code} subclass' `Helpers`. See {Code} for defining your own helper methods.
+  #
+  # @example Methods available in a Cecil block's scope
+  #   def has_data?(first_name) = File.exist?("data/#{first_name}.json")
+  #
+  #   name = "Bob"
+  #   last_names = ["McTesterson", "Rickenbacker"]
+  #
+  #   Cecil::Lang::TypeScript.generate_string do
+  #     content_for :imports # `content_for` is a BlockContext instance method
+  #
+  #     `let firstName = "$username"`[name] # `name` is a local variable
+  #
+  #     `let lastNames = $lastNames`[j last_names] # `j` helper via Cecil::Lang::TypeScript::Helpers
+  #
+  #     if has_data?(name) # has_data? comes from local scope
+  #       content_for :imports do
+  #         `import userData from './data/$first_name.json`[s name]
+  #       end
+  #     end
+  #
+  #   end
   class BlockContext < SimpleDelegator
     # @!visibility private
     def initialize(receiver, builder, helpers)

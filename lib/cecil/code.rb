@@ -6,7 +6,7 @@ module Cecil
   # Subclassing {Code} allows customizing the behavior (indentation, auto-closing brackets, etc) and providing helpers.
   #
   # - Override {Code} instance methods to change behavior.
-  # - Defined a module named `Helpers` to add helpers available in the Cecil block.
+  # - Defined a module named `Helpers` in your subclass to add methods available in the Cecil block.
   #
   # Check out classes in the {Lang} module for examples of customizing {Code}.
   #
