@@ -353,7 +353,6 @@ RSpec.describe Cecil do
 
     describe "reindenting multiline strings"
     describe "adding trailing newlines to multiline strings"
-    describe "using heredocs"
 
     describe "deferred code blocks" do
       it "defers code blocks for evaluation" do
