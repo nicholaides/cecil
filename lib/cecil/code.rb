@@ -5,10 +5,8 @@ module Cecil
   # {Code} serves as the base class for generating source code using Cecil.
   # Subclassing {Code} allows customizing the behavior (indentation, auto-closing brackets, etc) and providing helpers.
   #
-  # To define your own syntax, subclass {Code}.
-  #
-  # - Override instance methods to change behavior.
-  # - Defined a module named `Helpers` to add helpers availble to the Cecil block.
+  # - Override {Code} instance methods to change behavior.
+  # - Defined a module named `Helpers` to add helpers available in the Cecil block.
   #
   # Check out classes in the {Lang} module for examples of customizing {Code}.
   #
