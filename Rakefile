@@ -17,4 +17,22 @@ YARD::Rake::YardocTask.new do |t|
   t.options = %w[--no-cache --fail-on-warning]
 end
 
+directory ".yard"
+CLEAN.include ".yard/"
+
+def convert_markdown_yardoc_links_to_yardoc(str)
+  str.gsub(/\[([^\]]+)\]\[\{([^\}\]]+)\}\]/) { "{#{Regexp.last_match(2)} #{Regexp.last_match(1)}}" }
+end
+
+file ".yard/README.md" => ["README.md", ".yard"] do |t|
+  File.write t.name, convert_markdown_yardoc_links_to_yardoc(File.read("README.md"))
+end
+task yard: ".yard/README.md"
+
+task :ensure_yard_readme_is_up_to_date do
+  if File.read(".yard/README.md") != convert_markdown_yardoc_links_to_yardoc(File.read("README.md"))
+    raise ".yard/README.md is not up-to-date. Run `rake` before committing."
+  end
+end
+
 task default: %i[spec yard rubocop]

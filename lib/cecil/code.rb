@@ -88,10 +88,11 @@ module Cecil
       def generate_string(&) = generate("", &)
     end
 
-    # Methods defined in this module are available in a Cecil block.
+    # Subclasses of {Code} can define a module named `Helpers` and add methods to it that will be available inside a
+    # Cecil block for that subclass.
     #
-    # To add your own helper methods, subclass {Code}, and in your class, define a module named `Helpers`. If you want
-    # your parent class' helper methods, then `include` your parent class' `Helpers` module in yours, like this:
+    # When defining your own `Helpers` module, if you want your parent class' helper methods, then `include` your parent
+    # class' `Helpers` module in yours, like this:
     #
     #     class CSS < Code::Syntax
     #       module Helpers
@@ -107,6 +108,8 @@ module Cecil
     #         include CSS::Helpers # now `data_uri` will be an available helper
     #       end
     #     end
+    #
+    # Subclasses that don't define a `Helpers` module inherit the one from their parent class.
     module Helpers
     end
 

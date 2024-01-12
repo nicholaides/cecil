@@ -232,12 +232,12 @@ Things I've personally used Cecil to generate:
 ## Reference
 
 - [rubydoc.info](https://www.rubydoc.info/github/nicholaides/cecil/main)
-- [Customizing syntax][{Cecil::Code}]
+- {Cecil::Code Customizing syntax}
     - placeholder syntax
     - indentation
     - auto-closing brackets
     - etc.
-- [Methods available inside a Cecil block][{Cecil::BlockContext}]
+- {Cecil::BlockContext Methods available inside a Cecil block}
     - methods for emitting source code
     - helper methods
     - What methods are in scope?

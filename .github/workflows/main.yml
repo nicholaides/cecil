@@ -25,5 +25,7 @@ jobs:
       with:
         ruby-version: ${{ matrix.ruby }}
         bundler-cache: true
+    - name: Ensure that .yard/README is up-to-date
+      run: bundle exec rake ensure_yard_readme_is_up_to_date
     - name: Run the default task
       run: bundle exec rake
