@@ -31,6 +31,11 @@ module Cecil
 
         # Short for "list"; Accepts one or a list of strings and returns them joined with `", "`
         #
+        # Useful for:
+        # - arrays
+        # - objects
+        # - function arguments
+        #
         # @example
         #   the_classes = ["Websocket", "Array", "Function"]
         #   `register($args)`[l the_classes]
@@ -58,7 +63,8 @@ module Cecil
         # @return [String] JSON representation of the input
         def j(item) = item.to_json
 
-        # Short for "string content"; returns a JSON string without quotes.
+        # Short for "string content"; returns escaped version of the string that can be inserted into a JavaScript
+        # string literal or template literal.
         #
         # Useful for inserting data into a string or for outputting a string but using quotes to make it clear to the
         # reader what the intended output will be.
@@ -66,19 +72,19 @@ module Cecil
         # It also escapes single quotes and backticks so that it can be inserted into single-quoted strings and string
         # templates.
         #
-        # @example Inserting into a string
-        #   name = "Bob \"the Machine\" O'Brian"
+        # @example Inserting into a string literal
+        #   name = %q{Bob "the Machine" O'Brian}
         #   `const admin = "$name (Admin)"`[s name]
         #
         #   # outputs:
         #   # const admin = "Bob \"the Machine\" O\'Brian (Admin)"
         #
-        # @example Outputting what is obviously a string
-        #   name = "Bob \"the Machine\" O'Brian"
+        # @example Make your code communicate that a value will be a string
+        #   name = %q{Bob "the Machine" O'Brian}
         #   `const admin = "$name"`[s name]
         #
-        #   # outputs:
-        #   # const admin = "Bob \"the Machine\" O\'Brian"
+        #   # We could use the `#j` helper, too, but `#s` and quotes makes it clearer that the value will be a string
+        #   `const admin = $name`[j name]
         #
         # @param item [#to_s] A string or any object that responds to `#to_s`
         # @return [String] A JSON string without quotes

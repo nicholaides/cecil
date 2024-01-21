@@ -20,8 +20,16 @@ end
 directory ".yard"
 CLEAN.include ".yard/"
 
+def normalize_yard_ref(str)
+  if str.start_with?("Cecil::")
+    str
+  else
+    "Cecil::#{str}"
+  end
+end
+
 def convert_markdown_yardoc_links_to_yardoc(str)
-  str.gsub(/\[([^\]]+)\]\[\{([^\}\]]+)\}\]/) { "{#{Regexp.last_match(2)} #{Regexp.last_match(1)}}" }
+  str.gsub(/\[(.+)\]\[\{([^\}\]]+)\}\]/) { "{#{normalize_yard_ref(Regexp.last_match(2))} #{Regexp.last_match(1)}}" }
 end
 
 file ".yard/README.md" => ["README.md", ".yard"] do |t|

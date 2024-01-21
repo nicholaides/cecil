@@ -2,22 +2,23 @@
 
 An experimental templating library for generating source code.
 
-Your templates can look like the source code you want to generate thanks to clever use of Ruby's flexible syntax.
+Cecil templates look like the source code you want to generate thanks to Ruby's flexible syntax.
 
 ## Features
 
-### Write templates in plain Ruby code
+### Write templates in plain Ruby
 
-Pass a block to Cecil and use backticks (or use `src` if you prefer) to add lines of source code. Cecil will return your generated source code as a string.
+Call `Cecil::Code.generate_string` and pass it a block. Inside the block, add lines of code via backticks (or use `src` if you prefer). Cecil returns your generated source code as a string.
 
-Example:
+#### Example
 
 ```ruby
 model_code = Cecil::Code.generate_string do
-  # strings in backticks get added to the document
+  # Use backticks to add lines of code
   `import Model from '../model'`
 
-  # multi-line strings work great. Cecil preserves their indentation.
+  # Multi-line strings work, too.
+  # Cecil preserves indentation.
   `class User extends Model {
     id: number
     name: string
@@ -31,7 +32,7 @@ end
 puts model_code
 ```
 
-outputs:
+Returns:
 
 ```typescript
 import Model from '../model'
@@ -43,7 +44,7 @@ class User extends Model {
 export type Username = User['name']
 ```
 
-### Interpolate values with low-noise syntax
+### Interpolate values with Cecil's low-noise syntax
 
 Use `#[]` on the backticks to replace placeholders with actual values.
 
@@ -51,7 +52,7 @@ By default, placeholders start with `$` and are followed by an identifier.
 
 Positional arguments match up with placeholders in order. Named arguments match placeholders by name.
 
-Example:
+#### Example
 
 ```ruby
 field = "user"
@@ -64,7 +65,7 @@ Cecil::Code.generate_string do
   `let $field: $FieldType = $default`[field, types.join('|'), default_value.sort.to_json]
 
   # named arguments match placeholders by name
-  `let $field: $FieldClass<$Types> | null = new $FieldClass($default)`[
+  `let $field: $FieldClass<$Types> = new $FieldClass($default)`[
     field: field,
     FieldClass: field_class,
     Types: types.join('|'),
@@ -73,18 +74,38 @@ Cecil::Code.generate_string do
 end
 ```
 
-returns:
+Returns:
 
 ```typescript
 let user: string|string[] = ["DriftingSnowfall","SilentHaiku"]
-let user: Model<string|string[]> | null = new Model(["DriftingSnowfall","SilentHaiku"])
+let user: Model<string|string[]> = new Model(["DriftingSnowfall","SilentHaiku"])
+```
+
+
+#### "Doesn't Ruby already have string interpolation?"
+
+Yes, but compare the readability of these two approaches:
+
+```ruby
+`let $field: $FieldClass<$Types> = new $FieldClass($default)`[
+  field: field,
+  FieldClass: field_class,
+  Types: types.join('|'),
+  default: default_value.sort.to_json
+]
+
+# vs
+
+field_types = types.join('|'),
+default_json = default_value.sort.to_json
+"let #{field}: #{field_class}<#{field_types}> = new #{field_class}(#{default_json})"
 ```
 
 ### Indents code blocks & closes brackets automatically
 
-A block passed to `#[]` gets indented and open brackets get closed automatically.
+Pass a block to `#[]` gets indented and open brackets get closed automatically.
 
-Example:
+#### Example
 
 ```ruby
 model = "User"
@@ -103,7 +124,7 @@ Cecil::Code.generate_string do
 end
 ```
 
-returns:
+Returns:
 
 ```typescript
 class User extends Model {
@@ -114,13 +135,15 @@ class User extends Model {
 }
 ```
 
-### Emit code earlier or later in the file
+### Emit source code to other locations
 
-`content_for` can be used to add content to a different location of your file without having to iterate through your data multitple times.
+When generating source code, things like functions, parameters, classes, etc, often need to be declared, imported, or otherwise setup or before being used.
+
+`content_for` can be used to add content to a different location of your file.
 
 Call `content_for(some_key) { ... }` with key and a block to store content under the key you provide. Call `content_for(some_key)` with the key and *no* block to insert your stored content at that location.
 
-Example:
+#### Example
 
 ```ruby
 models = [
@@ -155,7 +178,7 @@ Cecil::Code.generate_string do
 end
 ```
 
-returns:
+Returns:
 
 ```typescript
 import AuthModel from '../models/AuthModel'
@@ -173,13 +196,13 @@ AuthModel.registerAncestor(User)
 Model.registerAncestor(Company)
 ```
 
-### Collect data as you go, then use it earlier in the document
+### Collect data as you go then use it earlier in the document
 
 The `#defer` method takes a block and waits to call it until the rest of the template is evaluated. The block's result is inserted at the location where `#defer` was called.
 
 This gives a similar ability to `#content_for`, but is more flexible because you can collect any kind of data, not just source code.
 
-Example:
+#### Example
 
 ```ruby
 models = [
@@ -209,7 +232,7 @@ Cecil::Code.generate_string do
 end
 ```
 
-returns:
+Returns:
 
 ```typescript
 import { AuthModel, Model } from '../models'
@@ -219,31 +242,225 @@ class Company extends Model {}
 class Candidate extends AuthModel {}
 ```
 
+### Customizable syntax and behaviors
+
+Easily customize the following features to make Cecil suit your needs/preferences:
+
+- placeholder syntax
+- auto-closing brackets
+- indentation
+
+Customizations are performed by subclassing {Cecil::Code `Cecil::Code`} and overriding the relevant methods.
+
+For example, Cecil comes with {Cecil::Lang::TypeScript `Cecil::Lang::TypeScript`} that you can use instead of of `Cecil::Code`. It has a few JavaScript/TypeScript-specific customizations. It's a subclass of `Cecil::Code` so it can be used the same way:
+
+```ruby
+Cecil::Lang::TypeScript.generate_string do
+  # ...
+end
+```
+
 ## Use cases
 
 Things I've personally used Cecil to generate:
 
-- serialization/deserialization code, generated from from specs (e.g. OpenAPI)
-- diagrams (e.g. Mermaid, PlantUML, and Dot/Graphviz) for ERDs/schemas, state machines, and data viz
-- state machines, generated from a list of states and transitions
-- test cases from lists of inputs and expected outputs; because parameterized tests can be very hard to debug
-- complex TypeScript classes and types, because meta-programming in TypeScript can get complex quickly
+- **serialization/deserialization code** generated from from specs (e.g. OpenAPI)
+- **diagrams** (e.g. Mermaid, PlantUML, Dot/Graphviz)
+    - ERDs/schemas
+    - state machine diagrams
+    - graphs
+    - data visualizations
+- **state machines** generated from a list of states and transitions
+- **test cases** generated from data that describes inputs/setup and expected outputs; because parameterized tests can be very hard to debug
+- **complex types** because meta-programming in TypeScript can get complex quickly
 
-## Reference
+## Quick Reference
 
-- [rubydoc.info](https://www.rubydoc.info/github/nicholaides/cecil/main)
-- {Cecil::Code Customizing syntax}
-    - placeholder syntax
-    - indentation
-    - auto-closing brackets
-    - etc.
-- {Cecil::BlockContext Methods available inside a Cecil block}
-    - methods for emitting source code
-    - helper methods
-    - What methods are in scope?
+Reference documentation is on RubyDoc.info:
+  [gem](https://www.rubydoc.info/gems/cecil)
+  |
+  [repo](https://www.rubydoc.info/github/nicholaides/cecil/main)
 
-[{Cecil::BlockContext}]: https://www.rubydoc.info/github/nicholaides/cecil/main/Cecil/BlockContext
-[{Cecil::Code}]: https://www.rubydoc.info/github/nicholaides/cecil/main/Cecil/Code
+### Calling Cecil
+
+Call
+  {Cecil::Code.generate `Cecil::Code.generate`} /
+  {Cecil::Code.generate_string `generate_string`}
+  with a block and inside the block, use backticks or `#src` to emit lines of source code.
+  E.g.
+
+```ruby
+# returns a string
+Cecil::Code.generate_string do
+  `function greet() {}`
+  `function respond() {}`
+end
+
+# outputs to $stdout
+Cecil::Code.generate do
+  `function greet() {}`
+  `function respond() {}`
+end
+```
+
+See: {Cecil::BlockContext Methods available inside a Cecil block}
+
+### Emitting source code
+
+- {Cecil::BlockContext#src backticks/``` #`` ```/`#src`} emit source code.
+  E.g.:
+    ```ruby
+    Cecil::Code.generate_string do
+      `function greet() {}`
+      `function respond() {}`
+      src "function ask() {}"
+    end
+    # outputs:
+    # function greet() {}
+    # function respond() {}
+    # function ask() {}
+    ```
+
+- {Cecil::Node#with `#[]`} interpolates data into placeholders. E.g.
+    ```ruby
+    Cecil::Code.generate_string do
+      `function $fn() {}`["greet"]
+      `function $fn() {}`[fn: "respond"]
+    end
+    # outputs:
+    # function greet() {}
+    # function respond() {}
+    ```
+- {Cecil::Node#with `#[]`}`{ ... }` given a block, interpolates and indents the code emitted in its block.
+    E.g.
+    ```ruby
+    Cecil::Code.generate_string do
+      `function $fn() {`["greet"] do
+        `console.log("hello")`
+      end
+    end
+    # outputs:
+    # function greet() {
+    #     console.log("hello")
+    # }
+    ```
+- {Cecil::Node#<< `#<<`} adds code the last line of the block.
+    E.g.
+    ```ruby
+    Cecil::Code.generate_string do
+      `(function ${fn}Now() {`["greet"] do
+        `console.log("hello")`
+      end << ')()'
+    end
+    # outputs:
+    # (function greetNow() {
+    #     console.log("hello")
+    # })()
+    ```
+- {Cecil::BlockContext#content_for `#content_for`} emits source code to different locations
+- {Cecil::BlockContext#defer `#defer`} for waits to emit the given source until after data has been gathered
+
+### Customizing behavior for the language of the source code you're generating
+
+Many of Cecil's defaults can be customized by creating a subclass of {Cecil::Code `Cecil::Code`} and overriding methods to customize syntax and behavior of:
+- placeholder syntax
+- indentation
+- auto-closing brackets
+
+Currently, Cecil comes with:
+- {Cecil::Code `Cecil::Code`} for generic code
+- {Cecil::Lang::TypeScript `Cecil::Lang::TypeScript`} for JavaScript and TypeScript
+
+
+### Auto-closing brackets
+
+> Customize which opening brackets are auto-closed by overriding {Cecil::Code#block_ending_pairs `Cecil::Code#block_ending_pairs`} in a subclass.
+
+When nesting code blocks with `#[] { ... }`, open brackets at the end of the string get closed automatically.
+
+For example, notice how we don't have to manually provide a closing `}` in the following:
+
+```ruby
+`$var = {`[var: "user"] do
+  `id: 42`
+end
+```
+becomes
+```javascript
+user = {
+    id: 42
+}
+```
+
+#### Multiple brackets
+
+Every consecutive closing bracket at the end of the string gets closed. E.g.
+
+```ruby
+`$var = [{(`[var: "user"] do
+  `id: 42`
+end
+```
+
+becomes
+
+```javascript
+user = ([{
+    id: 42
+)}]
+```
+
+Currently, the algorithm is simplistic, so open brackets that aren't at the end of the string will *not* get closed.
+
+In this example, the `(` in `test(` needs to be closed manually:
+
+```ruby
+`test("getter $fn", () => {`[fn: 'getUsername'] do
+  `assert(false)`
+end << `)'
+```
+
+```javascript
+test("getter getUsername", () => {
+    assert(false)
+})
+```
+
+### Placeholder syntax
+
+Default placeholder rules:
+- start with `$`-- e.g. `$foo`
+- named with alpha-numeric and underscore -- e.g. `$foo_bar123`
+- names can optionally be surrounded by optional brackets -- e.g  `${my_placeholder}`
+
+Surrounding with brackets can be useful to separate a placeholder from subsequent characters that would otherwise get parsed as a placeholder.
+
+E.g. `function ${fn}Sync()`-- without curly brackets, the placeholder would be parsed as `fnSync`.
+
+Customize placeholder syntax by subclassing {Cecil::Code `Cecil::Code`}
+and overriding {Cecil::Code placeholder-related methods}.
+
+
+### Helper methods
+
+If you use your generator frequently it can be helpful to define reusable helper methods on a subclass of {Cecil::Code `Cecil::Code`}.
+
+For example, the {Cecil::Lang::TypeScript::Helpers `Cecil::Lang::TypeScript`][{Lang::TypeScript}] subclass defines several [helper methods} for generating TypeScript code.
+
+[{BlockContext#content_for}]: https://www.rubydoc.info/github/nicholaides/cecil/main/Cecil/BlockContext#content_for-instance_method
+[{BlockContext#defer}]: https://www.rubydoc.info/github/nicholaides/cecil/main/Cecil/BlockContext#defer-instance_method
+[{BlockContext#src}]: https://www.rubydoc.info/github/nicholaides/cecil/main/Cecil/BlockContext#src-instance_method
+[{BlockContext}]: https://www.rubydoc.info/github/nicholaides/cecil/main/Cecil/BlockContext
+[{Code.generate_string}]: https://www.rubydoc.info/github/nicholaides/cecil/main/Cecil/Code#generate_string-class_method
+[{Code.generate}]: https://www.rubydoc.info/github/nicholaides/cecil/main/Cecil/Code#generate-class_method
+[{Code}]: https://www.rubydoc.info/github/nicholaides/cecil/main/Cecil/Code
+[{Code#block_ending_pairs}]: https://www.rubydoc.info/github/nicholaides/cecil/main/Cecil/Code#block_ending_pairs-instance_method
+[{Lang::TypeScript}]: https://www.rubydoc.info/github/nicholaides/cecil/main/Cecil/Lang/TypeScript
+[{Lang::TypeScript::Helpers}]: https://www.rubydoc.info/github/nicholaides/cecil/main/Cecil/Lang/TypeScript/Helpers
+[{Lang::TypeScript.generate_string}]: https://www.rubydoc.info/github/nicholaides/cecil/main/Cecil/Lang/TypeScript#generate_string-class_method
+[{Lang::TypeScript.generate}]: https://www.rubydoc.info/github/nicholaides/cecil/main/Cecil/Code#generate-class_method
+[{Node#<<}]: https://www.rubydoc.info/github/nicholaides/cecil/main/Cecil/Node#<<-instance_method
+[{Node#with}]: https://www.rubydoc.info/github/nicholaides/cecil/main/Cecil/Node#with-instance_method
 
 ## Installation
 
