@@ -102,6 +102,10 @@ module Cecil
     #   #   1, 2, 3
     #   # ])
     #
+    # @example Can be called with no parameters to nest a block
+    #   `ids = new Set([`[] do
+    #     `1, 2, 3`
+    #   end
     # @see Code
     def with(*positional_values, **named_values, &) = raise "Not implemented" # rubocop:disable Lint/UnusedMethodArgument
 
