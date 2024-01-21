@@ -464,19 +464,18 @@ For example, the {Cecil::Lang::TypeScript::Helpers `Cecil::Lang::TypeScript`][{L
 
 ## Installation
 
-Gem can be installed from github. Once I'm ready to bother with version numbers and releases and such, then I'll publish to Rubygems.
-
 From your shell:
 
 ```sh
-bundle add cecil --github=nicholaides/cecil
+bundle add cecil
 ```
 
-Add it to your Gemfile like:
+In your Gemfile like:
 
 ```ruby
-gem 'cecil', github: 'nicholaides/cecil'
+gem 'cecil'
 ```
+
 ## Development
 
 After checking out the repo, run `bin/setup` to install dependencies. Then, run `rake spec` to run the tests. You can also run `bin/console` for an interactive prompt that will allow you to experiment.
