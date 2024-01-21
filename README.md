@@ -1,4 +1,6 @@
 # Cecil
+[![Yard Documentation](https://img.shields.io/badge/rdoc.info-blue?label=docs)](https://www.rubydoc.info/github/nicholaides/cecil)
+[![Gem Version](https://img.shields.io/gem/v/cecil)](https://rubygems.org/gems/cecil)
 
 An experimental templating library for generating source code.
 
