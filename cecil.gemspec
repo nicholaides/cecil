@@ -6,13 +6,13 @@ Gem::Specification.new do |spec|
   spec.authors = ["Mike Nicholaides"]
   spec.email = ["mike@nicholaides.com"]
 
-  spec.summary = "Templating library"
+  spec.summary = "An experimental templating library for generating source code."
   spec.homepage = "https://github.com/nicholaides/cecil"
-  spec.description = "Templating library"
+  spec.description = "Cecil templates look like the source code you want to generate thanks to Ruby's flexible syntax."
   spec.license = "MIT"
   spec.required_ruby_version = ">= 3.1.0"
 
-  spec.metadata["allowed_push_host"] = "TODO: Set to your gem server 'https://example.com'"
+  spec.metadata["allowed_push_host"] = "https://rubygems.org"
   spec.metadata["rubygems_mfa_required"] = "true"
 
   spec.metadata["homepage_uri"] = spec.homepage
