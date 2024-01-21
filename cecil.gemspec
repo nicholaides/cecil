@@ -8,7 +8,10 @@ Gem::Specification.new do |spec|
 
   spec.summary = "An experimental templating library for generating source code."
   spec.homepage = "https://github.com/nicholaides/cecil"
-  spec.description = "Cecil templates look like the source code you want to generate thanks to Ruby's flexible syntax."
+  spec.description = <<~DESC
+    An experimental templating library for generating source code.  Cecil templates look like the source code you want
+    to generate thanks to Ruby's flexible syntax.
+  DESC
   spec.license = "MIT"
   spec.required_ruby_version = ">= 3.1.0"
 
