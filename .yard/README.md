@@ -2,9 +2,9 @@
 [![Yard Documentation](https://img.shields.io/badge/rdoc.info-blue?label=docs)](https://www.rubydoc.info/github/nicholaides/cecil)
 [![Gem Version](https://img.shields.io/gem/v/cecil)](https://rubygems.org/gems/cecil)
 
-An experimental templating library for generating source code.
+An experimental templating library designed specifically for generating source code (especially for languages that aren’t as meta-programmable as Ruby).
 
-Cecil templates look like the source code you want to generate thanks to Ruby's flexible syntax.
+Cecil templates closely resemble the target source code, making templates easier to write, read, and maintain.
 
 ## Features
 

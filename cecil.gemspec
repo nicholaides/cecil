@@ -6,11 +6,12 @@ Gem::Specification.new do |spec|
   spec.authors = ["Mike Nicholaides"]
   spec.email = ["mike@nicholaides.com"]
 
-  spec.summary = "An experimental templating library for generating source code."
+  spec.summary = "An experimental templating library designed specifically for generating source code."
   spec.homepage = "https://github.com/nicholaides/cecil"
   spec.description = <<~DESC
-    An experimental templating library for generating source code.  Cecil templates look like the source code you want
-    to generate thanks to Ruby's flexible syntax.
+    An experimental templating library designed specifically for generating source code (especially for languages that
+    aren’t as meta-programmable as Ruby). Cecil templates closely resemble the target source code, making templates
+    easier to write, read, and maintain.
   DESC
   spec.license = "MIT"
   spec.required_ruby_version = ">= 3.1.0"
