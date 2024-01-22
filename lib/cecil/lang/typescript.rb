@@ -88,7 +88,7 @@ module Cecil
         #
         # @param item [#to_s] A string or any object that responds to `#to_s`
         # @return [String] A JSON string without quotes
-        def s(item) = item.to_s.to_json[1...-1].gsub("'", "\\\\'").gsub("`", "\\\\`")
+        def s(item) = item.to_s.to_json[1...-1].gsub(/['`\$]/) { "\\#{_1}" }
       end
     end
   end

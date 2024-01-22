@@ -153,6 +153,9 @@ RSpec.describe Cecil::Lang::TypeScript do
       it "escapes backticks" do
         expect(s("hello `world`")).to eq "hello \\`world\\`"
       end
+      it "dollar signs" do
+        expect(s("hello ${world}")).to eq "hello \\${world}"
+      end
     end
   end
 end
