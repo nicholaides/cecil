@@ -357,6 +357,15 @@ module Cecil
       def self.build(src:, builder:, **kwargs)
         placeholders = builder.syntax.scan_for_placeholders(src)
 
+        # HACK: to make sure we throw the exception at the time the developer adds the string/template
+        #
+        # This gets called later, too, so it's work being done twice.
+        #
+        # This should probably be refactored so that Nodes carry around a de-indented version, and then just have to add
+        # the indentation later when stringified
+        Indentation.reindent(src, 0, "THIS SHOULD NEVER BE USED",
+                             handle_ambiguity: builder.syntax.handle_ambiguous_indentation)
+
         if placeholders.any?
           new(src:, placeholders:, **kwargs)
         else
@@ -375,7 +384,7 @@ module Cecil
       def with(*positional_values, **named_values, &)
         src =
           case [positional_values, named_values, @placeholders]
-          in [], {}, []
+          in [], {}, [] # TODO: is this case possible? should it be?
             @src
           in [], _, _
             Text.interpolate_named(@src, @placeholders, named_values)

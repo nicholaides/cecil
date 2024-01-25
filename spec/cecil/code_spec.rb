@@ -333,6 +333,15 @@ RSpec.describe Cecil::Code do
               pass`
           end.to raise_error(/ambiguous/i)
         end
+
+        it "raises an error immediately when called so that the error message shows you which line it's on" do
+          Cecil::Code.generate_string do
+            expect do
+              `def my_func():
+                pass`
+            end.to raise_error(/ambiguous/i)
+          end
+        end
       end
 
       describe "overrideing to raise an error" do
