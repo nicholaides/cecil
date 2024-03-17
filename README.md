@@ -419,7 +419,7 @@ In this example, the `(` in `test(` needs to be closed manually:
 ```ruby
 `test("getter $fn", () => {`[fn: 'getUsername'] do
   `assert(false)`
-end << `)'
+end << `)`
 ```
 
 ```javascript
@@ -432,12 +432,12 @@ test("getter getUsername", () => {
 
 Default placeholder rules:
 - start with `$`-- e.g. `$foo`
-- named with alpha-numeric and underscore -- e.g. `$foo_bar123`
-- names can optionally be surrounded by optional brackets -- e.g  `${my_placeholder}`
+- named can contain alpha-numeric and underscore characters-- e.g. `$foo_bar123`
+- names can optionally be surrounded by brackets -- e.g  `${my_placeholder}`, `$[my_placeholder]`, `$<my_placeholder>`, or `$(my_placeholder)`
 
 Surrounding with brackets can be useful to separate a placeholder from subsequent characters that would otherwise get parsed as a placeholder.
 
-E.g. `function ${fn}Sync()`-- without curly brackets, the placeholder would be parsed as `fnSync`.
+E.g. `function ${fn}Sync()`-- without curly brackets `$fnSync` would be the placeholder.
 
 Customize placeholder syntax by subclassing [`Cecil::Code`][{Code}]
 and overriding [placeholder-related methods][{Code}].
