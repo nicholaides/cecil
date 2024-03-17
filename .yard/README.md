@@ -139,7 +139,7 @@ class User extends Model {
 
 ### Emit source code to other locations
 
-When generating source code, things like functions, parameters, classes, etc, often need to be declared, imported, or otherwise setup or before being used.
+When generating source code, things like functions, parameters, classes, etc, often need to be declared, imported, or otherwise setup before being used.
 
 `content_for` can be used to add content to a different location of your file.
 
@@ -360,7 +360,7 @@ See: {Cecil::BlockContext Methods available inside a Cecil block}
     # })()
     ```
 - {Cecil::BlockContext#content_for `#content_for`} emits source code to different locations
-- {Cecil::BlockContext#defer `#defer`} for waits to emit the given source until after data has been gathered
+- {Cecil::BlockContext#defer `#defer`} waits to emit the given source until after data has been gathered
 
 ### Customizing behavior for the language of the source code you're generating
 
@@ -409,7 +409,7 @@ becomes
 ```javascript
 user = ([{
     id: 42
-)}]
+}])
 ```
 
 Currently, the algorithm is simplistic, so open brackets that aren't at the end of the string will *not* get closed.
