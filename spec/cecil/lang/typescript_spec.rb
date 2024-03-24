@@ -88,7 +88,7 @@ RSpec.describe Cecil::Lang::TypeScript do
   describe Cecil::Lang::TypeScript::Helpers do
     include described_class
 
-    describe "t" do
+    describe "#t" do
       it "joins items with ' | '" do
         expect(t(%w[a b c])).to eq "a | b | c"
       end
@@ -111,7 +111,7 @@ RSpec.describe Cecil::Lang::TypeScript do
       end
     end
 
-    describe "l" do
+    describe "#l" do
       it "joins items with ', '" do
         expect(l(%w[a b c])).to eq "a, b, c"
       end
@@ -134,13 +134,13 @@ RSpec.describe Cecil::Lang::TypeScript do
       end
     end
 
-    describe "j" do
+    describe "#j" do
       it "converts input to JSON" do
         expect(j({ myObj: "data" })).to eq '{"myObj":"data"}'
       end
     end
 
-    describe "s" do
+    describe "#s" do
       it "converts input to string without quotes" do
         expect(s("hello world")).to eq "hello world"
       end
