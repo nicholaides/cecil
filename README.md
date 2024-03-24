@@ -105,7 +105,7 @@ default_json = default_value.sort.to_json
 
 ### Indents code blocks & closes brackets automatically
 
-Pass a block to `#[]` gets indented and open brackets get closed automatically.
+A block passed to `#[]` gets indented and open brackets get closed automatically.
 
 #### Example
 
