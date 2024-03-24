@@ -372,6 +372,7 @@ Many of Cecil's defaults can be customized by creating a subclass of {Cecil::Cod
 Currently, Cecil comes with:
 - {Cecil::Code `Cecil::Code`} for generic code
 - {Cecil::Lang::TypeScript `Cecil::Lang::TypeScript`} for JavaScript and TypeScript
+- {Cecil::Lang::Rust `Cecil::Lang::Rust`} for Rust
 
 
 ### Auto-closing brackets
