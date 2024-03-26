@@ -1,3 +1,5 @@
+require: rubocop-rspec
+
 AllCops:
   TargetRubyVersion: 3.1
   NewCops: enable
@@ -23,3 +25,8 @@ Style/NumericPredicate:           { Enabled: false }
 
 Layout/LineLength:
   Max: 120
+
+
+RSpec/NestedGroups:         { Enabled: false }
+RSpec/ExampleLength:        { Enabled: false }
+RSpec/MultipleExpectations: { Enabled: false }

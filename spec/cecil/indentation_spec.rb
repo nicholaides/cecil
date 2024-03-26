@@ -1,11 +1,11 @@
 require "cecil/indentation"
-require_relative "../../helpers/reindent_helpers"
+require_relative "../helpers/reindent_helpers"
 
 RSpec.describe Cecil::Indentation do
   include described_class
   extend described_class
 
-  describe ".reindent" do
+  describe ".reindent" do # rubocop:disable RSpec/EmptyExampleGroup
     def self.reindents(template_str, desc_more = " ", **kwargs)
       describe "given#{desc_more}\"#{template_str}\"" do
         template = IndentationTemplate.new(template_str)

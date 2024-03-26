@@ -1,6 +1,6 @@
-RSpec.describe Cecil do
+RSpec.describe Cecil do # rubocop:disable RSpec/MultipleDescribes
   it "has a version number" do
-    expect(Cecil::VERSION).not_to be nil
+    expect(Cecil::VERSION).not_to be_nil
   end
 
   describe "nesting generation calls" do
@@ -159,11 +159,11 @@ RSpec.describe Cecil do
       end
 
       it "errors on positional and named placeholders" do
-        cecil do
-          `line { $code } [ $another ]`["my code", another: "more code"]
-        end
-
-        raises(/expects/i)
+        expect do
+          code do
+            `line { $code } [ $another ]`["my code", another: "more code"]
+          end
+        end.to raise_error(/expects/i)
       end
 
       it "errors on unmatched placeholders given positional arguments" do
@@ -174,7 +174,7 @@ RSpec.describe Cecil do
         end.to raise_error(/mismatch/i)
       end
 
-      it "errors on unmatched placeholders given keyword arguments " do
+      it "errors on unmatched placeholders given keyword arguments" do
         expect do
           code do
             `line { $code } [ $another ]`[code: "my code"]
@@ -190,7 +190,7 @@ RSpec.describe Cecil do
         end.to raise_error(/mismatch/i)
       end
 
-      it "errors on unmatched placeholder values given keyword arguments " do
+      it "errors on unmatched placeholder values given extra keyword arguments" do
         expect do
           code do
             `line { $code }`[code: "my code", more: "some extra"]
@@ -198,7 +198,7 @@ RSpec.describe Cecil do
         end.to raise_error(/mismatch/i)
       end
 
-      it "errors on unmatched placeholder values given keyword arguments " do
+      it "errors on unmatched placeholder values given keyword arguments with different names" do
         expect do
           code do
             `line { $code }`[wrong_name: "my code"]
@@ -206,7 +206,7 @@ RSpec.describe Cecil do
         end.to raise_error(/mismatch/i)
       end
 
-      it "errors on unmatched placeholder values given keyword arguments " do
+      it "errors on unmatched placeholder values given no arguments" do
         expect do
           code do
             `line { $code }`[]
@@ -214,7 +214,7 @@ RSpec.describe Cecil do
         end.to raise_error(/mismatch/i)
       end
 
-      it "errors on unmatched placeholder values given keyword arguments " do
+      it "errors on neglect to call #[]" do
         expect do
           code do
             `line { $code }`
@@ -330,17 +330,16 @@ RSpec.describe Cecil do
           CODE
         end
       end
+
       describe "indentation" do
         it "indents blocks" do
-          cecil do
+          expect_code do
             `start outer`
             `inner {`[] do
               `content`
             end
             `end outer`
-          end
-
-          outputs <<~CODE
+          end.to eq <<~CODE
             start outer
             inner {
                 content
@@ -631,21 +630,19 @@ RSpec.describe Cecil do
     end
   end
 
-  describe "customizing configuration" do
-    it "works" do
-      require "cecil/lang/typescript"
-      expect(
-        Cecil::Lang::TypeScript.generate_string do
-          `function($args) {`[l %w[a b c]] do
-            `doStuff()`
-          end
+  it "can have configuaration customized" do
+    require "cecil/lang/typescript"
+    expect(
+      Cecil::Lang::TypeScript.generate_string do
+        `function($args) {`[l %w[a b c]] do
+          `doStuff()`
         end
-      ).to eq <<~CODE
-        function(a, b, c) {
-          doStuff()
-        }
-      CODE
-    end
+      end
+    ).to eq <<~CODE
+      function(a, b, c) {
+        doStuff()
+      }
+    CODE
   end
 
   describe "ambiguous indentation" do
@@ -672,20 +669,22 @@ end
 
 def object_method = "OBJECT METHOD"
 
-RSpec.describe Cecil do
-  describe "block scope" do
+RSpec.describe Cecil, "block scope method access" do # rubocop:disable RSpec/DescribeMethod
+  describe "global scope" do
     it "has access to methods defined in the global scope" do
-      expect(code do
+      expect_code do
         src object_method
-      end.strip).to eq object_method
+      end.to eq "OBJECT METHOD\n"
     end
+  end
 
+  describe "local scope" do
     def receiver_method = "RECEIVER METHOD"
 
     it "has access to methods defined in the block's scope" do
-      expect(code do
+      expect_code do
         src receiver_method
-      end.strip).to eq receiver_method
+      end.to eq "RECEIVER METHOD\n"
     end
   end
 end

@@ -43,14 +43,8 @@ RSpec.describe Cecil::Code do
     end
 
     describe "an object that responds to #<<" do
-      let :buffer do
-        buff = BasicObject.new
-        def buff.<<(value) = @appended_value = value
-        def buff.value = @appended_value
-        buff
-      end
-
-      let(:buffer_contents) { buffer.value }
+      let(:buffer) { [] }
+      let(:buffer_contents) { buffer.join }
 
       it_behaves_like "a code receiver"
     end
@@ -70,7 +64,7 @@ RSpec.describe Cecil::Code do
         described_class.generate_string do
           `hello world`
         end
-      end.to_not output.to_stdout
+      end.not_to output.to_stdout
     end
   end
 
@@ -266,6 +260,7 @@ RSpec.describe Cecil::Code do
           CODE
         end
       end
+
       describe "turning off the starting Regexp" do
         def_syntax do
           def placeholder_start_re = //
@@ -335,7 +330,7 @@ RSpec.describe Cecil::Code do
         end
 
         it "raises an error immediately when called so that the error message shows you which line it's on" do
-          Cecil::Code.generate_string do
+          described_class.generate_string do
             expect do
               `def my_func():
                 pass`

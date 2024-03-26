@@ -2,7 +2,7 @@ require_relative "../helpers/reindent_helpers"
 require "cecil/placeholder"
 
 RSpec.describe Cecil::Text do
-  include Cecil::Text
+  include described_class
 
   describe ".scan_for_re_matches" do
     it "returns matches" do

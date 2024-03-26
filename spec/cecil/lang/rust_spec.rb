@@ -48,13 +48,13 @@ RSpec.describe Cecil::Lang::Rust do
   it "closes curly braces" do
     code = described_class.generate_string do
       `fn fibonacci() {`[] do
-        `recurse()`
+        `do_stuff()`
       end
     end
 
     expect(code).to eq <<~CODE
       fn fibonacci() {
-          recurse()
+          do_stuff()
       }
     CODE
   end

@@ -1,6 +1,6 @@
 require "cecil/lang/typescript"
 
-RSpec.describe Cecil::Lang::TypeScript do
+RSpec.describe Cecil::Lang::TypeScript do # rubocop:disable RSpec/FilePath,RSpec/SpecFilePathFormat
   it "indents with 2 spaces" do
     code = described_class.generate_string do
       `function $fn() {`["fibonacci"] do
@@ -18,13 +18,13 @@ RSpec.describe Cecil::Lang::TypeScript do
   it "closes curly braces" do
     code = described_class.generate_string do
       `function $fn() {`["fibonacci"] do
-        `recurse()`
+        `do_stuff()`
       end
     end
 
     expect(code).to eq <<~CODE
       function fibonacci() {
-        recurse()
+        do_stuff()
       }
     CODE
   end
@@ -92,12 +92,15 @@ RSpec.describe Cecil::Lang::TypeScript do
       it "joins items with ' | '" do
         expect(t(%w[a b c])).to eq "a | b | c"
       end
+
       it "converts inputs to strings" do
         expect(t(["a", "b", :c])).to eq "a | b | c"
       end
+
       it "removes nils" do
         expect(t(["a", nil, "b", :c])).to eq "a | b | c"
       end
+
       it "accepts single item" do
         expect(t("a")).to eq "a"
       end
@@ -115,12 +118,15 @@ RSpec.describe Cecil::Lang::TypeScript do
       it "joins items with ', '" do
         expect(l(%w[a b c])).to eq "a, b, c"
       end
+
       it "converts inputs to strings" do
         expect(l(["a", "b", :c])).to eq "a, b, c"
       end
+
       it "removes nils" do
         expect(l(["a", nil, "b", :c])).to eq "a, b, c"
       end
+
       it "accepts single item" do
         expect(l("a")).to eq "a"
       end
@@ -144,15 +150,19 @@ RSpec.describe Cecil::Lang::TypeScript do
       it "converts input to string without quotes" do
         expect(s("hello world")).to eq "hello world"
       end
+
       it "escapes double quotes" do
         expect(s('hello "world"')).to eq 'hello \\"world\\"'
       end
+
       it "escapes single quotes" do
         expect(s("hello 'world'")).to eq "hello \\'world\\'"
       end
+
       it "escapes backticks" do
         expect(s("hello `world`")).to eq "hello \\`world\\`"
       end
+
       it "dollar signs" do
         expect(s("hello ${world}")).to eq "hello \\${world}"
       end

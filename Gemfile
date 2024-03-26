@@ -16,3 +16,5 @@ gem "retest", "~> 1.11"
 gem "yard", "~> 0.9.34"
 
 gem "webrick", "~> 1.8"
+
+gem "rubocop-rspec", "~> 2.27"
