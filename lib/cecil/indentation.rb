@@ -52,7 +52,7 @@ module Cecil
 
       min_level = levels.min
 
-      if levels.last == levels.max && ambiguous_level = handle_ambiguity.call(src:, min_level:)
+      if levels.last == levels.max && (ambiguous_level = handle_ambiguity.call(src:, min_level:))
         return ambiguous_level
       end
 

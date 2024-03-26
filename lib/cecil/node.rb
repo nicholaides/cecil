@@ -172,7 +172,7 @@ module Cecil
       def remove_child(child) = children.delete(child)
 
       def replace_child(old_node, new_node)
-        if idx = children.index(old_node)
+        if (idx = children.index(old_node))
           children[idx] = new_node
         else
           children.each { _1.replace_child(old_node, new_node) }
