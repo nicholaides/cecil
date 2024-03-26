@@ -18,3 +18,5 @@ gem "yard", "~> 0.9.34"
 gem "webrick", "~> 1.8"
 
 gem "rubocop-rspec", "~> 2.27"
+
+gem "rubocop-rake", "~> 0.6.0"

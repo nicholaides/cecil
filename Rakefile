@@ -35,8 +35,10 @@ end
 file ".yard/README.md" => ["README.md", ".yard"] do |t|
   File.write t.name, convert_markdown_yardoc_links_to_yardoc(File.read("README.md"))
 end
+desc "Generate yardoc documentation"
 task yard: ".yard/README.md"
 
+desc "Ensure yardoc documentation README is up-to-date"
 task :ensure_yard_readme_is_up_to_date do
   if File.read(".yard/README.md") != convert_markdown_yardoc_links_to_yardoc(File.read("README.md"))
     raise ".yard/README.md is not up-to-date. Run `rake` before committing."
