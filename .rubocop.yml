@@ -14,6 +14,9 @@ Style/StringLiteralsInInterpolation:
   Enabled: true
   EnforcedStyle: double_quotes
 
+Layout/LineLength:
+  Max: 120
+
 Metrics/AbcSize:                  { Enabled: false }
 Metrics/BlockLength:              { Enabled: false }
 Metrics/ClassLength:              { Enabled: false }
@@ -21,10 +24,6 @@ Metrics/CyclomaticComplexity:     { Enabled: false }
 Metrics/MethodLength:             { Enabled: false }
 Metrics/PerceivedComplexity:      { Enabled: false }
 Style/FrozenStringLiteralComment: { Enabled: false } # Not useful for Ruby 3.1 and above, which is what this gem targets
-
-Layout/LineLength:
-  Max: 120
-
 
 RSpec/NestedGroups:         { Enabled: false }
 RSpec/ExampleLength:        { Enabled: false }
