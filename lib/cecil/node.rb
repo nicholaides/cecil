@@ -3,7 +3,7 @@ require_relative "text"
 require_relative "indentation"
 
 module Cecil
-  class Node
+  class Node # rubocop:disable Style/Documentation
     # @!visibility private
     attr_accessor :parent
 

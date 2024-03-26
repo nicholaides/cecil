@@ -1,5 +1,5 @@
 module Cecil
-  module Indentation
+  module Indentation # rubocop:disable Style/Documentation
     module_function
 
     # @!visibility private
@@ -11,7 +11,7 @@ module Cecil
     # @!visibility private
     def level__basic(src) = levels(src.lines.grep(/\S/)).min
 
-    module Ambiguity
+    module Ambiguity # rubocop:disable Style/Documentation
       module_function
 
       # When given an ambiguously indented string, it assumes that first line is `adjustment` characters less than the

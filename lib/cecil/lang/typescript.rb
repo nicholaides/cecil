@@ -3,7 +3,7 @@ require "json"
 
 module Cecil
   module Lang
-    class TypeScript < Code
+    class TypeScript < Code # rubocop:disable Style/Documentation
       # Overrides to use 2 spaces for indentation
       def indent_chars = "  "
 
@@ -13,7 +13,7 @@ module Cecil
       # Overrides to add support for closing multi-line comments (e.g. /* ... */)
       def block_ending_pairs = super.merge({ "/*" => "*/" })
 
-      module Helpers
+      module Helpers # rubocop:disable Style/Documentation
         include Code::Helpers
 
         # Short for "types"; Accepts one or a list of types and returns their union.

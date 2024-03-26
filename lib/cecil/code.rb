@@ -48,7 +48,6 @@ module Cecil
   #   # .bg-dots {
   #   #   background-image: url(data:image/png;base64,iRxVB0…);
   #   # }
-
   class Code
     class << self
       # Generates output by executing the given block and writing its return value to the provided output buffer/stream.

@@ -2,14 +2,14 @@ require_relative "../../cecil"
 
 module Cecil
   module Lang
-    class Rust < Code
+    class Rust < Code # rubocop:disable Style/Documentation
       # Overrides to use 4 spaces for indentation
       def indent_chars = "    "
 
       # Overrides to ignore ambiguous indentation
       def handle_ambiguous_indentation = Cecil::Indentation::Ambiguity.ignore
 
-      module Helpers
+      module Helpers # rubocop:disable Style/Documentation
         # Short for "list"; Accepts one or a list of strings and returns them joined with `", "`
         #
         # @param items [Array[#to_s], #to_s] One or a list of objects that respond to `#to_s`
