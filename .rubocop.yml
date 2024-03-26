@@ -22,7 +22,6 @@ Metrics/CyclomaticComplexity:     { Enabled: false }
 Metrics/MethodLength:             { Enabled: false }
 Metrics/PerceivedComplexity:      { Enabled: false }
 Style/FrozenStringLiteralComment: { Enabled: false }
-Style/NumericPredicate:           { Enabled: false }
 
 Layout/LineLength:
   Max: 120
