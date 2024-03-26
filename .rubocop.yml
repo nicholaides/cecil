@@ -25,6 +25,11 @@ Metrics/MethodLength:             { Enabled: false }
 Metrics/PerceivedComplexity:      { Enabled: false }
 Style/FrozenStringLiteralComment: { Enabled: false } # Not useful for Ruby 3.1 and above, which is what this gem targets
 
+Gemspec/DependencyVersion:             { Enabled: true }
+Gemspec/DeprecatedAttributeAssignment: { Enabled: true }
+Gemspec/DevelopmentDependencies:       { Enabled: true }
+Gemspec/RequireMFA:                    { Enabled: true }
+
 RSpec/NestedGroups:         { Enabled: false }
 RSpec/ExampleLength:        { Enabled: false }
 RSpec/MultipleExpectations: { Enabled: false }
