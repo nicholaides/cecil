@@ -85,7 +85,7 @@ module Cecil
     def match_ending_pair(src, block_ending_pairs)
       return if src.empty?
 
-      block_ending_pairs.detect { |opener, _closer| src.end_with?(opener) }
+      block_ending_pairs.find { |opener, _closer| src.end_with?(opener) }
     end
 
     # Returns or yields each closing bracket.
