@@ -2,13 +2,11 @@ require "cecil/lang/typescript"
 
 RSpec.describe Cecil::Lang::TypeScript do # rubocop:disable RSpec/FilePath,RSpec/SpecFilePathFormat
   it "indents with 2 spaces" do
-    code = described_class.generate_string do
+    expect_code do
       `function $fn() {`["fibonacci"] do
         `recurse()`
       end
-    end
-
-    expect(code).to eq <<~CODE
+    end.to eq <<~CODE
       function fibonacci() {
         recurse()
       }
@@ -16,13 +14,11 @@ RSpec.describe Cecil::Lang::TypeScript do # rubocop:disable RSpec/FilePath,RSpec
   end
 
   it "closes curly braces" do
-    code = described_class.generate_string do
+    expect_code do
       `function $fn() {`["fibonacci"] do
         `do_stuff()`
       end
-    end
-
-    expect(code).to eq <<~CODE
+    end.to eq <<~CODE
       function fibonacci() {
         do_stuff()
       }
@@ -30,13 +26,11 @@ RSpec.describe Cecil::Lang::TypeScript do # rubocop:disable RSpec/FilePath,RSpec
   end
 
   it "closes parens" do
-    code = described_class.generate_string do
+    expect_code do
       `myFunc(`[] do
         `value`
       end
-    end
-
-    expect(code).to eq <<~CODE
+    end.to eq <<~CODE
       myFunc(
         value
       )
@@ -44,14 +38,12 @@ RSpec.describe Cecil::Lang::TypeScript do # rubocop:disable RSpec/FilePath,RSpec
   end
 
   it "closes square brackets" do
-    code = described_class.generate_string do
+    expect_code do
       `values = [`[] do
         `v1,`
         `v2`
       end
-    end
-
-    expect(code).to eq <<~CODE
+    end.to eq <<~CODE
       values = [
         v1,
         v2
@@ -60,13 +52,11 @@ RSpec.describe Cecil::Lang::TypeScript do # rubocop:disable RSpec/FilePath,RSpec
   end
 
   it "closes multi-line comments" do
-    code = described_class.generate_string do
+    expect_code do
       `/*`[] do
         `comments`
       end
-    end
-
-    expect(code).to eq <<~CODE
+    end.to eq <<~CODE
       /*
         comments
       */
@@ -74,12 +64,10 @@ RSpec.describe Cecil::Lang::TypeScript do # rubocop:disable RSpec/FilePath,RSpec
   end
 
   it "does not indent ambigous lines" do
-    code = described_class.generate_string do
+    expect_code do
       `function () {
       }`
-    end
-
-    expect(code).to eq <<~CODE
+    end.to eq <<~CODE
       function () {
       }
     CODE

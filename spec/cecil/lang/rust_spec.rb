@@ -32,13 +32,11 @@ end
 
 RSpec.describe Cecil::Lang::Rust do
   it "indents with 4 spaces" do
-    code = described_class.generate_string do
+    expect_code do
       `fn fibonacci() {`[] do
         `recurse()`
       end
-    end
-
-    expect(code).to eq <<~CODE
+    end.to eq <<~CODE
       fn fibonacci() {
           recurse()
       }
@@ -46,13 +44,11 @@ RSpec.describe Cecil::Lang::Rust do
   end
 
   it "closes curly braces" do
-    code = described_class.generate_string do
+    expect_code do
       `fn fibonacci() {`[] do
         `do_stuff()`
       end
-    end
-
-    expect(code).to eq <<~CODE
+    end.to eq <<~CODE
       fn fibonacci() {
           do_stuff()
       }
@@ -60,13 +56,11 @@ RSpec.describe Cecil::Lang::Rust do
   end
 
   it "closes parens" do
-    code = described_class.generate_string do
+    expect_code do
       `my_func(`[] do
         `value`
       end
-    end
-
-    expect(code).to eq <<~CODE
+    end.to eq <<~CODE
       my_func(
           value
       )
@@ -74,14 +68,12 @@ RSpec.describe Cecil::Lang::Rust do
   end
 
   it "closes square brackets" do
-    code = described_class.generate_string do
+    expect_code do
       `let values = vec![`[] do
         `v1,`
         `v2`
       end
-    end
-
-    expect(code).to eq <<~CODE
+    end.to eq <<~CODE
       let values = vec![
           v1,
           v2
@@ -90,12 +82,10 @@ RSpec.describe Cecil::Lang::Rust do
   end
 
   it "does not indent ambigous lines" do
-    code = described_class.generate_string do
+    expect_code do
       `fn my_func() {
       }`
-    end
-
-    expect(code).to eq <<~CODE
+    end.to eq <<~CODE
       fn my_func() {
       }
     CODE
