@@ -296,12 +296,15 @@ RSpec.describe Cecil::Code do
 
     describe ".scan_for_placeholders" do
       it "returns an array of Placeholders" do
+        syntax = described_class.new
         template = "class $CLASS extends $PARENT export $CLASS"
 
-        expect(described_class.new.scan_for_placeholders(template)).to eq [
-          Cecil::Placeholder.new("CLASS", 6, 12),
-          Cecil::Placeholder.new("PARENT", 21, 28),
-          Cecil::Placeholder.new("CLASS", 36, 42)
+        placeholder_data = syntax.scan_for_placeholders(template).map { _1.to_h.except(:match) }
+
+        expect(placeholder_data).to eq [
+          { ident: "CLASS", offset_start: 6, offset_end: 12, renderer: syntax },
+          { ident: "PARENT", offset_start: 21, offset_end: 28, renderer: syntax },
+          { ident: "CLASS", offset_start: 36, offset_end: 42, renderer:  syntax }
         ]
       end
 

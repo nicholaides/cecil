@@ -13,6 +13,18 @@ module Cecil
       # Overrides to add support for closing multi-line comments (e.g. /* ... */)
       def block_ending_pairs = super.merge({ "/*" => "*/" })
 
+      def placeholder_delimiting_pairs = super.merge({ '"' => '"' })
+
+      def render(value, placeholder)
+        # binding.irb if value == "John Doe"
+        case placeholder.match.named_captures.transform_keys(&:to_sym)
+        in pstart: '"', pend: '"'
+          value.to_s.to_json
+        else
+          value.to_s
+        end
+      end
+
       module Helpers # rubocop:disable Style/Documentation
         include Code::Helpers
 

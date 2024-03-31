@@ -73,6 +73,24 @@ RSpec.describe Cecil::Lang::TypeScript do # rubocop:disable RSpec/FilePath,RSpec
     CODE
   end
 
+  describe "when a placeholder's delimiters are quotes" do
+    it "json-ify's a string" do
+      expect_code do
+        `const name = $"name"`["Bob \"The Machine\" O'Brien"]
+      end.to eq <<~CODE
+        const name = "Bob \\"The Machine\\" O'Brien"
+      CODE
+    end
+
+    it "json-ify's the stringifiied other value (not necessarily what you want)" do
+      expect_code do
+        `const name = $"name"`[{ bob: 42 }]
+      end.to eq <<~CODE
+        const name = "{:bob=>42}"
+      CODE
+    end
+  end
+
   describe Cecil::Lang::TypeScript::Helpers do
     include described_class
 

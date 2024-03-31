@@ -76,11 +76,12 @@ RSpec.describe Cecil::Text do
 
   describe ".replace" do
     let(:template) { "class CLASS extends PARENT export CLASS" }
+    let(:syntax) { Cecil::Code.new }
     let(:placeholders) do
       [
-        Cecil::Placeholder.new("CLASS", 6, 11),
-        Cecil::Placeholder.new("PARENT", 20, 26),
-        Cecil::Placeholder.new("CLASS", 34, 39)
+        Cecil::Placeholder.new("CLASS", 6, 11, "$C", syntax),
+        Cecil::Placeholder.new("PARENT", 20, 26, "$P", syntax),
+        Cecil::Placeholder.new("CLASS", 34, 39, "$C", syntax)
       ]
     end
 

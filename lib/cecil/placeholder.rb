@@ -1,6 +1,6 @@
 module Cecil
   # Represents the name and location of a placeholder in a string.
-  Placeholder = Struct.new(:ident, :offset_start, :offset_end) do
+  Placeholder = Struct.new(:ident, :offset_start, :offset_end, :match, :renderer) do
     # @!attribute ident
     #   @return [String] the name of this placeholder. E.g. the `ident` of `${my_field}` would be `my_field`
 
@@ -27,5 +27,7 @@ module Cecil
     # @param [Symbol] member
     # @return [Placeholder]
     def transform_key(member) = with(**{ member => yield(self[member]) })
+
+    def render(value) = renderer.render(value, self)
   end
 end

@@ -261,9 +261,9 @@ module Cecil
         #{Regexp.union(
           placeholder_delimiting_pairs.map do |pstart, pend|
             /
-              #{Regexp.quote pstart}
+              (?<pstart>#{Regexp.quote pstart})
               (?<placeholder>#{placeholder_ident_re})
-              #{Regexp.quote pend}
+              (?<pend>#{Regexp.quote pend})
             /x
           end
         )}
@@ -292,7 +292,7 @@ module Cecil
     def scan_for_placeholders(src)
       Text.scan_for_re_matches(src, placeholder_re)
           .map do |match|
-            Placeholder.new(match[:placeholder], *match.offset(0))
+            Placeholder.new(match[:placeholder], *match.offset(0), match, self)
           end
     end
 
@@ -330,5 +330,7 @@ module Cecil
     #     end
     #   end
     def handle_ambiguous_indentation = Indentation::Ambiguity.raise_error
+
+    def render(value, _placeholder) = value.to_s
   end
 end

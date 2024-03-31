@@ -73,7 +73,7 @@ module Cecil
         placeholders.reverse.each do |placeholder|
           value = values.fetch(placeholder.ident)
 
-          new_src[placeholder.range] = value.to_s
+          new_src[placeholder.range] = placeholder.render(value)
         end
       end
     end
