@@ -583,7 +583,7 @@ RSpec.describe Cecil do # rubocop:disable RSpec/MultipleDescribes
 
             content_for :imports
           end
-        end.to raise_error(/undefined method `<<' for nil/)
+        end.to raise_error(/undefined method .?<<.? for nil/)
       end
 
       it "can append to a content_for node" do
