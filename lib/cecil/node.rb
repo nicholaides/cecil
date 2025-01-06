@@ -151,8 +151,8 @@ module Cecil
         base.attr_accessor :children
       end
 
-      def initialize(**kwargs, &)
-        super(**kwargs)
+      def initialize(**, &)
+        super(**)
 
         self.children = []
         add_to_root(&)
@@ -192,12 +192,11 @@ module Cecil
     # @see BlockContext#content_for
     class Deferred < Node
       # @!visibility private
-      def initialize(**kwargs, &block)
-        super(**kwargs)
+      def initialize(**, &)
+        super(**)
 
         @evaluate = lambda do
-          Container.new(**kwargs, &block)
-                   .tap { root.replace_child self, _1 }
+          Container.new(**, &).tap { root.replace_child self, _1 }
         end
       end
 
@@ -298,8 +297,8 @@ module Cecil
       end
 
       # @!visibility private
-      def initialize(src:, **kwargs)
-        super(**kwargs)
+      def initialize(src:, **)
+        super(**)
         @src = src
       end
 
@@ -374,8 +373,8 @@ module Cecil
       end
 
       # @!visibility private
-      def initialize(src:, placeholders:, **kwargs)
-        super(**kwargs)
+      def initialize(src:, placeholders:, **)
+        super(**)
         @src = src
         @placeholders = placeholders
       end
