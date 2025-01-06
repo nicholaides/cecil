@@ -6,12 +6,12 @@ RSpec.describe Cecil::Indentation do
   extend described_class
 
   describe ".reindent" do # rubocop:disable RSpec/EmptyExampleGroup
-    def self.reindents(template_str, desc_more = " ", **kwargs)
+    def self.reindents(template_str, desc_more = " ", **)
       describe "given#{desc_more}\"#{template_str}\"" do
         template = IndentationTemplate.new(template_str)
         [0, 1, 2, 3, 10, 20].each do |level|
           it "reindents to level #{level}" do
-            actual = reindent(template.as_input, level, "~~", **kwargs)
+            actual = reindent(template.as_input, level, "~~", **)
             expected = template.indented "~~" * level
             expect(actual).to eq expected
           end
@@ -21,8 +21,8 @@ RSpec.describe Cecil::Indentation do
       end
     end
 
-    def self.reindents_ambiguous(template_str, **kwargs)
-      reindents(template_str, " ambigious\n      ", **kwargs) do |context|
+    def self.reindents_ambiguous(template_str, **)
+      reindents(template_str, " ambigious\n      ", **) do |context|
         context.it "cannot reindent \"#{template_str}\"" do
           expect do
             reindent(template_str, 3, "~~")
