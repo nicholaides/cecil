@@ -16,6 +16,6 @@ gem "yard", "~> 0.9.34"
 # Dependency for serving yard documentation when developing
 gem "webrick", "~> 1.8"
 
-gem "rubocop-rspec", "~> 2.27"
+gem "rubocop-rspec", "~> 3.3"
 
 gem "rubocop-rake", "~> 0.6.0"
