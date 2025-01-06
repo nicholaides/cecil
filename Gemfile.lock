@@ -82,7 +82,7 @@ GEM
     unicode-emoji (4.0.4)
     webrick (1.8.1)
     wisper (2.0.1)
-    yard (0.9.36)
+    yard (0.9.37)
 
 PLATFORMS
   arm64-darwin-22
