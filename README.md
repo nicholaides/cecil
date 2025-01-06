@@ -450,20 +450,22 @@ and overriding [placeholder-related methods][{Code}].
 
 If you use your generator frequently it can be helpful to define reusable helper methods on a subclass of [`Cecil::Code`][{Code}].
 
-For example, the [`Cecil::Lang::TypeScript`][{Lang::TypeScript}] subclass defines several [helper methods][{Lang::TypeScript::Helpers}] for generating TypeScript code.
+For example, the [`Cecil::Lang::TypeScript`][{Lang::TypeScript}] subclass
+defines several [helper methods][{Lang::TypeScript::Helpers}] for generating TypeScript code.
 
 [{BlockContext#content_for}]: https://www.rubydoc.info/github/nicholaides/cecil/main/Cecil/BlockContext#content_for-instance_method
 [{BlockContext#defer}]: https://www.rubydoc.info/github/nicholaides/cecil/main/Cecil/BlockContext#defer-instance_method
 [{BlockContext#src}]: https://www.rubydoc.info/github/nicholaides/cecil/main/Cecil/BlockContext#src-instance_method
 [{BlockContext}]: https://www.rubydoc.info/github/nicholaides/cecil/main/Cecil/BlockContext
+[{Code#block_ending_pairs}]: https://www.rubydoc.info/github/nicholaides/cecil/main/Cecil/Code#block_ending_pairs-instance_method
 [{Code.generate_string}]: https://www.rubydoc.info/github/nicholaides/cecil/main/Cecil/Code#generate_string-class_method
 [{Code.generate}]: https://www.rubydoc.info/github/nicholaides/cecil/main/Cecil/Code#generate-class_method
 [{Code}]: https://www.rubydoc.info/github/nicholaides/cecil/main/Cecil/Code
-[{Code#block_ending_pairs}]: https://www.rubydoc.info/github/nicholaides/cecil/main/Cecil/Code#block_ending_pairs-instance_method
-[{Lang::TypeScript}]: https://www.rubydoc.info/github/nicholaides/cecil/main/Cecil/Lang/TypeScript
-[{Lang::TypeScript::Helpers}]: https://www.rubydoc.info/github/nicholaides/cecil/main/Cecil/Lang/TypeScript/Helpers
 [{Lang::TypeScript.generate_string}]: https://www.rubydoc.info/github/nicholaides/cecil/main/Cecil/Lang/TypeScript#generate_string-class_method
 [{Lang::TypeScript.generate}]: https://www.rubydoc.info/github/nicholaides/cecil/main/Cecil/Code#generate-class_method
+[{Lang::TypeScript::Helpers}]: https://www.rubydoc.info/github/nicholaides/cecil/main/Cecil/Lang/TypeScript/Helpers
+[{Lang::TypeScript}]: https://www.rubydoc.info/github/nicholaides/cecil/main/Cecil/Lang/TypeScript
+[{Lang::Rust}]: https://www.rubydoc.info/github/nicholaides/cecil/main/Cecil/Lang/Rust
 [{Node#<<}]: https://www.rubydoc.info/github/nicholaides/cecil/main/Cecil/Node#<<-instance_method
 [{Node#with}]: https://www.rubydoc.info/github/nicholaides/cecil/main/Cecil/Node#with-instance_method
 
