@@ -160,7 +160,7 @@ module Cecil
 
       def add_to_root(&) = builder.build_node(self, &)
 
-      def build_child(**kwargs) = root.build_child(**kwargs, parent: self)
+      def build_child(**) = root.build_child(**, parent: self)
 
       def add_child(child) = children << child
 
@@ -192,11 +192,11 @@ module Cecil
     # @see BlockContext#content_for
     class Deferred < Node
       # @!visibility private
-      def initialize(**kwargs, &block) # rubocop:disable Style/ArgumentsForwarding
+      def initialize(**kwargs, &block)
         super(**kwargs)
 
         @evaluate = lambda do
-          Container.new(**kwargs, &block) # rubocop:disable Style/ArgumentsForwarding
+          Container.new(**kwargs, &block)
                    .tap { root.replace_child self, _1 }
         end
       end
@@ -354,7 +354,7 @@ module Cecil
     # When {#with}/{#[]} is called on the node, it will replace itself with a {Literal} or {LiteralWithChildren}
     class Template < Node
       # @!visibility private
-      def self.build(src:, builder:, **kwargs)
+      def self.build(src:, builder:, **)
         placeholders = builder.syntax.scan_for_placeholders(src)
 
         # HACK: to make sure we throw the exception at the time the developer adds the string/template
@@ -367,9 +367,9 @@ module Cecil
                              handle_ambiguity: builder.syntax.handle_ambiguous_indentation)
 
         if placeholders.any?
-          new(src:, placeholders:, **kwargs)
+          new(src:, placeholders:, **)
         else
-          Literal.new(src:, **kwargs)
+          Literal.new(src:, **)
         end
       end
 

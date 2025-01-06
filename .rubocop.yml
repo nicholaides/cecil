@@ -3,7 +3,7 @@ require:
   - rubocop-rake
 
 AllCops:
-  TargetRubyVersion: 3.1
+  TargetRubyVersion: 3.2
   NewCops: enable
 
 Style/StringLiterals:
@@ -21,7 +21,7 @@ Metrics/ClassLength:              { Enabled: false }
 Metrics/CyclomaticComplexity:     { Enabled: false }
 Metrics/MethodLength:             { Enabled: false }
 Metrics/PerceivedComplexity:      { Enabled: false }
-Style/FrozenStringLiteralComment: { Enabled: false } # Not useful for Ruby 3.1 and above, which is what this gem targets
+Style/FrozenStringLiteralComment: { Enabled: false } # Not useful for Ruby 3.2 and above, which is what this gem targets
 
 Gemspec/DependencyVersion:      { Enabled: true }
 Lint/HeredocMethodCallPosition: { Enabled: true }

@@ -14,7 +14,7 @@ Gem::Specification.new do |spec|
     easier to write, read, and maintain.
   DESC
   spec.license = "MIT"
-  spec.required_ruby_version = ">= 3.1.0"
+  spec.required_ruby_version = ">= 3.2.0"
 
   spec.metadata["allowed_push_host"] = "https://rubygems.org"
   spec.metadata["rubygems_mfa_required"] = "true"
