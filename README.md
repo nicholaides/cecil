@@ -322,7 +322,6 @@ See: [Methods available inside a Cecil block][{BlockContext}]
     # function respond() {}
     # function ask() {}
     ```
-
 - [`#[]`][{Node#with}] interpolates data into placeholders. E.g.
     ```ruby
     Cecil::Code.generate_string do
@@ -365,11 +364,13 @@ See: [Methods available inside a Cecil block][{BlockContext}]
 ### Customizing behavior for the language of the source code you're generating
 
 Many of Cecil's defaults can be customized by creating a subclass of [`Cecil::Code`][{Code}] and overriding methods to customize syntax and behavior of:
+
 - placeholder syntax
 - indentation
 - auto-closing brackets
 
 Currently, Cecil comes with:
+
 - [`Cecil::Code`][{Code}] for generic code
 - [`Cecil::Lang::TypeScript`][{Lang::TypeScript}] for JavaScript and TypeScript
 - [`Cecil::Lang::Rust`][{Lang::Rust}] for Rust
@@ -432,6 +433,7 @@ test("getter getUsername", () => {
 ### Placeholder syntax
 
 Default placeholder rules:
+
 - start with `$`-- e.g. `$foo`
 - named can contain alpha-numeric and underscore characters-- e.g. `$foo_bar123`
 - names can optionally be surrounded by brackets -- e.g  `${my_placeholder}`, `$[my_placeholder]`, `$<my_placeholder>`, or `$(my_placeholder)`
