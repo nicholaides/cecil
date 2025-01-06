@@ -1,6 +1,6 @@
 require "cecil/lang/typescript"
 
-RSpec.describe Cecil::Lang::TypeScript do # rubocop:disable RSpec/FilePath,RSpec/SpecFilePathFormat
+RSpec.describe Cecil::Lang::TypeScript do # rubocop:disable RSpec/SpecFilePathFormat
   it "indents with 2 spaces" do
     expect_code do
       `function $fn() {`["fibonacci"] do
